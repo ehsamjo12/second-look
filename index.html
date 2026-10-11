@@ -207,6 +207,97 @@ details summary { cursor: pointer; }
   .meta li { grid-template-columns: 20px 1fr; } .meta .v { grid-column: 2; }
 }
 @media (prefers-reduced-motion: reduce) { .bar, .fold > summary::after { transition: none; } }
+
+/* ---------- Glass layer: frosted translucent surfaces floating over soft monochrome light ---------- */
+:root {
+  --glass: rgba(255, 255, 255, 0.52);
+  --glass-strong: rgba(255, 255, 255, 0.72);
+  --glass-edge: rgba(255, 255, 255, 0.85);
+  --glass-line: rgba(0, 0, 0, 0.06);
+  --glass-blur: blur(28px) saturate(170%);
+  --glass-shadow: 0 1px 0 rgba(255,255,255,0.9) inset, 0 -1px 0 rgba(0,0,0,0.03) inset, 0 8px 32px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05);
+}
+html { background: #fbfbfd; }
+body { background: transparent; position: relative; min-height: 100%; }
+body::before {
+  content: ""; position: fixed; inset: -10%; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(38% 32% at 18% 12%, rgba(0,0,0,0.07), transparent 70%),
+    radial-gradient(34% 30% at 86% 28%, rgba(0,0,0,0.06), transparent 70%),
+    radial-gradient(40% 34% at 30% 78%, rgba(0,0,0,0.05), transparent 70%),
+    radial-gradient(30% 26% at 80% 88%, rgba(0,0,0,0.06), transparent 70%),
+    #fbfbfd;
+  animation: drift 40s ease-in-out infinite alternate;
+}
+@keyframes drift { to { transform: translate3d(2%, -2%, 0) scale(1.04); } }
+
+.glass, .take, .arg, .drop, textarea, input[type="text"], .tabs, .annotated, .stat, .msg.a, .folds, .panel-fold, .about {
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+}
+.take { border-radius: 28px; background: var(--glass-strong); padding: 36px 28px; position: relative; overflow: hidden; }
+.take::before, .arg::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(160deg, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0) 38%);
+}
+.take > *, .arg > * { position: relative; }
+.arg { border-radius: 22px; position: relative; overflow: hidden; }
+textarea, input[type="text"] { border-radius: 18px; }
+textarea:focus, input[type="text"]:focus { background: var(--glass-strong); outline: none; box-shadow: var(--glass-shadow), 0 0 0 4px rgba(0,0,0,0.06); }
+.drop { border-radius: 22px; border-style: solid; }
+.drop.over { background: var(--glass-strong); box-shadow: var(--glass-shadow), 0 0 0 4px rgba(0,0,0,0.08); }
+
+.tabs { border-radius: 980px; padding: 4px; }
+.tab { border-radius: 980px; padding: 8px 24px; transition: background 0.25s ease, box-shadow 0.25s ease; }
+.tab[aria-selected="true"] { background: rgba(255,255,255,0.95); box-shadow: 0 1px 0 #fff inset, 0 2px 10px rgba(0,0,0,0.1), 0 0 0 0.5px rgba(0,0,0,0.05); }
+
+button.primary {
+  background: linear-gradient(180deg, rgba(60,60,64,0.92), rgba(18,18,20,0.96));
+  box-shadow: 0 1px 0 rgba(255,255,255,0.25) inset, 0 6px 20px rgba(0,0,0,0.22);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+button.primary:hover { background: linear-gradient(180deg, rgba(50,50,54,0.95), rgba(0,0,0,0.98)); transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255,255,255,0.25) inset, 0 10px 26px rgba(0,0,0,0.26); }
+button.primary:active { transform: scale(0.98); }
+
+.report { border-top: 0; padding-top: 0; }
+.folds { border-radius: 22px; padding: 0 20px; border-top: 1px solid var(--glass-edge); }
+.fold:last-child { border-bottom: 0; }
+.fold { border-bottom-color: var(--glass-line); }
+.panel-fold { border-radius: 22px; padding: 0 20px; }
+.panel-fold > summary { padding: 16px 2px; }
+.about { border-radius: 22px; padding: 16px 20px; }
+.about[open] { padding-bottom: 20px; }
+
+.annotated, .stat { border-radius: 16px; }
+.wt { background: rgba(255,255,255,0.8); box-shadow: 0 0 0 0.5px rgba(0,0,0,0.08); }
+.wt.strong { background: var(--ink); box-shadow: none; }
+.about-tag { border-color: rgba(0,0,0,0.1); }
+.count, .chip, .pill { background: rgba(255,255,255,0.7); box-shadow: 0 0 0 0.5px rgba(0,0,0,0.08); }
+.pill.false { background: var(--ink); box-shadow: none; }
+.mark.green, .mark.info { background: rgba(255,255,255,0.8); }
+.track { background: rgba(0,0,0,0.08); height: 8px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.06) inset; }
+.bar { background: linear-gradient(90deg, #4a4a4f, #1d1d1f); border-radius: 4px; }
+.msg.q { background: linear-gradient(180deg, #3a3a3e, #1d1d1f); }
+.msg.a { border-radius: 20px; border-bottom-left-radius: 6px; }
+
+/* Content rises in softly */
+.report-body > * { animation: rise 0.5s cubic-bezier(.2,.8,.2,1) both; }
+.report-body > *:nth-child(2) { animation-delay: 0.06s; }
+.report-body > *:nth-child(3) { animation-delay: 0.12s; }
+.report-body > *:nth-child(4) { animation-delay: 0.18s; }
+@keyframes rise { from { transform: translateY(8px); } to { transform: none; } }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .take, .arg, .drop, textarea, input[type="text"], .tabs, .annotated, .stat, .msg.a, .folds, .panel-fold, .about { background: #f5f5f7; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body::before, .report-body > * { animation: none; }
+  button.primary, .tab { transition: none; }
+}
 </style>
 
 <main class="wrap">
