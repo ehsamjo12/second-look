@@ -149,6 +149,47 @@ mark.mis { background: var(--hl-mis); border-bottom: 2px solid var(--bad); }
 .h-nums { font-family: var(--font-mono); font-size: 0.8rem; grid-row: 1 / span 2; grid-column: 2; align-self: center; text-align: right; font-variant-numeric: tabular-nums; }
 .empty { color: var(--muted); font-size: 0.92rem; margin: 0; }
 details summary { cursor: pointer; font-family: var(--font-display); font-weight: 600; }
+.extras summary { color: var(--muted); font-size: 0.92rem; }
+.extras-body { display: grid; gap: 12px; padding-top: 12px; }
+.extras-body .label { display: block; margin-bottom: 4px; }
+
+/* Verdict card */
+.take { display: grid; gap: 16px; }
+.take-top { display: grid; gap: 4px; }
+.bottom-line { margin: 0; font-size: 1.05rem; max-width: 60ch; }
+.scores { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px 24px; }
+.scores .pct { font-size: 1.7rem; }
+
+/* Arguments */
+.args { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; counter-reset: arg; }
+.arg { border: 1px solid var(--line); border-left: 4px solid var(--warn); border-radius: 4px; padding: 14px 16px; display: grid; gap: 8px; min-width: 0; }
+.arg.strong { border-left-color: var(--bad); }
+.arg.weak { border-left-color: var(--line); }
+.arg-head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.arg-point { font-family: var(--font-display); font-weight: 700; font-size: 1.08rem; line-height: 1.3; flex: 1 1 260px; min-width: 0; }
+.arg-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.wt { font-family: var(--font-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 1px 7px; border-radius: 3px; border: 1px solid currentColor; }
+.wt.strong { color: var(--bad); } .wt.moderate { color: var(--warn); } .wt.weak { color: var(--muted); }
+.about-tag { font-family: var(--font-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 1px 7px; border-radius: 3px; background: var(--soft); color: var(--muted); }
+.evidence { margin: 0; padding: 6px 12px; border-left: 2px solid var(--line); color: var(--fg); font-style: italic; overflow-wrap: anywhere; }
+.reason { margin: 0; max-width: 65ch; }
+.reason b, .evidence-label { font-family: var(--font-display); font-style: normal; font-weight: 600; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-right: 6px; }
+.counter { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.counter li { display: grid; grid-template-columns: 20px 1fr; gap: 8px; }
+.counter b { font-family: var(--font-display); }
+
+/* Folded detail sections */
+.folds { display: grid; border-top: 1px solid var(--line); }
+.fold { border-bottom: 1px solid var(--line); }
+.fold > summary { list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 2px; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary::after { content: "+"; font-family: var(--font-mono); color: var(--muted); font-size: 1.1rem; }
+.fold[open] > summary::after { content: "–"; }
+.fold > summary > span:first-child { flex: 1; }
+.count { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); background: var(--soft); padding: 1px 8px; border-radius: 10px; }
+.fold-body { padding: 0 2px 16px; display: grid; gap: 10px; min-width: 0; }
+.panel-fold { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 4px 18px; }
+.panel-fold > summary { font-size: 1.05rem; }
 .about { font-size: 0.92rem; color: var(--muted); display: grid; gap: 8px; }
 .about p { margin: 0; max-width: 65ch; }
 @media (max-width: 480px) { h1 { font-size: 1.9rem; } .pct { font-size: 1.8rem; } .meta li { grid-template-columns: 20px 1fr; } .meta .v { grid-column: 2; } }
@@ -159,7 +200,7 @@ details summary { cursor: pointer; font-family: var(--font-display); font-weight
   <header>
     <div class="label">Fake news &amp; AI content check</div>
     <h1>Second Look</h1>
-    <p class="lede">Paste an article or post, or upload a picture or video clip. You get an estimate of how likely it is to be AI-generated and how likely it is to be false or misleading, with the evidence behind each number.</p>
+    <p class="lede">Paste a post or upload a picture or video. You’ll see whether it looks fake or AI-made, and exactly why.</p>
   </header>
 
   <section class="slip" aria-label="What to check">
@@ -170,10 +211,8 @@ details summary { cursor: pointer; font-family: var(--font-display); font-weight
     </div>
 
     <div id="pane-text">
-      <label class="label" for="text-in">Text to check</label>
+      <label class="label" for="text-in" hidden>Text to check</label>
       <textarea id="text-in" placeholder="Paste a news article, headline, social media post or message…"></textarea>
-      <label class="label" for="src-in" style="display:block;margin-top:12px">Where you saw it (optional)</label>
-      <input type="text" id="src-in" placeholder="e.g. a link, “WhatsApp group”, “Facebook page called Daily Truth”">
     </div>
 
     <div id="pane-media" hidden>
@@ -183,16 +222,27 @@ details summary { cursor: pointer; font-family: var(--font-display); font-weight
         <span class="mono" id="drop-hint">JPEG, PNG, WebP or GIF</span>
         <div class="preview" id="preview"></div>
       </label>
-      <label class="label" for="ctx-in" style="display:block;margin-top:12px">Caption or claim that came with it (optional)</label>
-      <textarea id="ctx-in" class="small" placeholder="e.g. “Photo shows flooding in Paris yesterday”"></textarea>
     </div>
 
-    <div class="opts">
-      <label><input type="checkbox" id="deep"> Deep analysis (slower, more thorough)</label>
-      <label id="frames-opt" hidden>Video frames
-        <select id="frames"><option>4</option><option selected>6</option><option>8</option><option>12</option></select>
-      </label>
-    </div>
+    <details class="extras" id="extras">
+      <summary>Add details (optional)</summary>
+      <div class="extras-body">
+        <div id="src-wrap">
+          <label class="label" for="src-in">Where you saw it</label>
+          <input type="text" id="src-in" placeholder="e.g. a link, “WhatsApp group”, “Facebook page called Daily Truth”">
+        </div>
+        <div id="ctx-wrap" hidden>
+          <label class="label" for="ctx-in">Caption or claim that came with it</label>
+          <textarea id="ctx-in" class="small" placeholder="e.g. “Photo shows flooding in Paris yesterday”"></textarea>
+        </div>
+        <div class="opts">
+          <label><input type="checkbox" id="deep"> Deep analysis (slower, more thorough)</label>
+          <label id="frames-opt" hidden>Video frames
+            <select id="frames"><option>4</option><option selected>6</option><option>8</option><option>12</option></select>
+          </label>
+        </div>
+      </div>
+    </details>
 
     <div class="row">
       <button class="primary" id="go">Check it</button>
@@ -222,14 +272,14 @@ details summary { cursor: pointer; font-family: var(--font-display); font-weight
     </form>
   </section>
 
-  <section class="panel" aria-label="Past checks">
-    <div class="row" style="justify-content:space-between">
-      <h2>Past checks</h2>
-      <button class="ghost" id="clear-hist">Clear</button>
+  <details class="fold panel-fold" aria-label="Past checks">
+    <summary><span>Past checks</span><span class="count" id="hist-count">0</span></summary>
+    <div class="fold-body">
+      <ul class="hist" id="hist"></ul>
+      <p class="empty" id="hist-empty">Your checks appear here, saved only in this browser.</p>
+      <div><button class="ghost" id="clear-hist">Clear history</button></div>
     </div>
-    <ul class="hist" id="hist"></ul>
-    <p class="empty" id="hist-empty">Your checks appear here, saved only in this browser.</p>
-  </section>
+  </details>
 
   <details class="about">
     <summary>How the estimate works</summary>
@@ -247,14 +297,25 @@ const EXAMPLE = {
   ai_generated: 64,
   misleading: 83,
   confidence: "medium",
-  verdict: "Probably misleading, with some signs of AI writing",
-  summary: "Example: a viral post claiming a city banned all cars overnight. The tone is alarmist, no officials or documents are named, and one sentence follows a pattern common in AI-written text.",
-  tactics: ["Urgency", "No source", "Emotional language", "Share bait"],
-  signals: [
-    { type: "red_flag", text: "Urgent, emotional language and all-caps words" },
-    { type: "red_flag", text: "No named official, date, or link to a statement" },
-    { type: "red_flag", text: "Generic three-part phrasing typical of AI-generated text" },
-    { type: "reassuring", text: "Cities do sometimes announce car restrictions" }
+  verdict: "Probably fake",
+  bottom_line: "A real city ban this big would come with an official notice and months of warning. This post has neither, and it’s written to make you share it before you check.",
+  tactics: ["Urgency", "No source", "Share bait"],
+  arguments: [
+    { about: "fake", weight: "strong", tactic: "Too big to be this quiet", point: "A ban this big doesn’t happen overnight",
+      evidence: "“BANNED all private cars starting tomorrow morning”",
+      reasoning: "Cities announce car restrictions months ahead, with exemptions for deliveries, disabled drivers and emergencies. A ban starting the next morning would cause chaos, and it would be front-page news everywhere." },
+    { about: "fake", weight: "strong", tactic: "No source", point: "There’s no way to check where it came from",
+      evidence: "“The mayor announced it on TV last night”",
+      reasoning: "It doesn’t name the mayor, the channel or the date. Real news gives you enough detail to find the original. Leaving it vague makes the claim impossible to check, which is often the point." },
+    { about: "fake", weight: "moderate", tactic: "Share bait", point: "It pushes you to share before thinking",
+      evidence: "“SHARE before it’s deleted!”",
+      reasoning: "Genuine news isn’t at risk of being “deleted”. This line creates panic so people spread it before checking. It’s one of the most common tricks in viral hoaxes." },
+    { about: "ai", weight: "weak", point: "One sentence reads like AI filler",
+      evidence: "“transform the city, reduce pollution, and create a healthier future for everyone”",
+      reasoning: "Vague, upbeat lists of three are typical of AI writing. On its own this proves little, since PR writers do the same." }
+  ],
+  counterpoints: [
+    { point: "Car restrictions are real", reasoning: "Some cities do limit cars in their centres, so the topic isn’t made up. The overnight, city-wide part is what doesn’t hold up." }
   ],
   passages: [
     { quote: "BANNED all private cars starting tomorrow morning", kind: "misleading", reason: "Bans like this are announced months ahead and phased in." },
@@ -470,6 +531,24 @@ function annotate(text, passages) {
   return { box, count: spans.length, spans };
 }
 
+function fold(title, count, open) {
+  const d = el("details", "fold"); if (open) d.open = true;
+  const s = el("summary"); s.append(el("span", null, title));
+  if (count != null) s.append(el("span", "count", String(count)));
+  const b = el("div", "fold-body"); d.append(s, b);
+  return { d, b };
+}
+
+// Older saved checks used "signals" and "summary"; turn them into the newer shape.
+function argsOf(r) {
+  if (Array.isArray(r.arguments) && r.arguments.length) return r.arguments;
+  return (r.signals || []).filter(s => s.type !== "reassuring").map(s => ({ point: s.text, weight: "moderate", about: "fake" }));
+}
+function countersOf(r) {
+  if (Array.isArray(r.counterpoints)) return r.counterpoints;
+  return (r.signals || []).filter(s => s.type === "reassuring").map(s => ({ point: s.text }));
+}
+
 function render(c, isExample) {
   const r = c.result;
   $("report-tag").textContent = isExample ? "Example result" : new Date(c.date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
@@ -477,76 +556,77 @@ function render(c, isExample) {
   const body = $("report-body"); body.replaceChildren();
   const ai = clamp(r.ai_generated), mis = clamp(r.misleading);
 
-  const head = el("div");
-  head.append(el("p", "verdict", r.verdict || "Result"), el("p", "summary", r.summary || ""));
-  body.append(head);
-
-  const meters = el("div", "meters");
-  meters.append(meter("Likely AI-generated", ai, "made or altered by AI"), meter("Likely false or misleading", mis, "content or framing"));
-  body.append(meters);
-
+  /* 1. Our take */
+  const take = el("div", "take");
+  const top = el("div", "take-top");
+  top.append(el("span", "label", "Our take"), el("p", "verdict", r.verdict || "Result"));
+  const bl = r.bottom_line || r.summary;
+  if (bl) top.append(el("p", "bottom-line", bl));
+  take.append(top);
+  const scores = el("div", "scores");
+  scores.append(meter("Likely fake or misleading", mis, "content or framing"), meter("Likely AI-generated", ai, "made or altered by AI"));
+  take.append(scores);
   const conf = String(r.confidence || "low").toLowerCase();
   const n = conf === "high" ? 3 : conf === "medium" ? 2 : 1;
-  const cw = el("div", "conf"); cw.append(el("span", "label", "Confidence"));
+  const cw = el("div", "conf"); cw.append(el("span", "label", "How sure we are"));
   const dots = el("span", "dots"); for (let i = 0; i < 3; i++) dots.append(el("i", i < n ? "on" : ""));
   cw.append(dots, el("span", "band", conf.charAt(0).toUpperCase() + conf.slice(1) + (c.deep ? " · deep analysis" : "")));
-  body.append(cw);
+  take.append(cw);
+  body.append(take);
 
-  if (Array.isArray(r.tactics) && r.tactics.length) {
-    const s = section("Manipulation tactics spotted"); const ch = el("div", "chips");
-    r.tactics.forEach(t => ch.append(el("span", "chip", t))); s.append(ch); body.append(s);
+  /* 2. Why we think so */
+  const args = argsOf(r);
+  if (args.length) {
+    const s = section("Why we think so");
+    const ol = el("ol", "args");
+    args.forEach(a => {
+      const w = ["strong", "moderate", "weak"].includes(a.weight) ? a.weight : "moderate";
+      const li = el("li", "arg " + w);
+      const h = el("div", "arg-head");
+      h.append(el("span", "arg-point", a.point || ""));
+      const tags = el("span", "arg-tags");
+      tags.append(el("span", "wt " + w, w === "strong" ? "Strong sign" : w === "weak" ? "Weak sign" : "Moderate sign"));
+      tags.append(el("span", "about-tag", a.about === "ai" ? "AI clue" : a.tactic || "Fake clue"));
+      h.append(tags); li.append(h);
+      if (a.evidence) { const ev = el("p", "evidence"); ev.append(el("span", "evidence-label", "What we saw"), document.createTextNode(a.evidence)); li.append(ev); }
+      if (a.reasoning) { const rs = el("p", "reason"); rs.append(el("b", null, "Why it matters"), document.createTextNode(a.reasoning)); li.append(rs); }
+      ol.append(li);
+    });
+    s.append(ol); body.append(s);
   }
 
+  /* 3. On the other hand */
+  const counters = countersOf(r);
+  if (counters.length) {
+    const s = section("On the other hand");
+    const ul = el("ul", "counter");
+    counters.forEach(cp => {
+      const li = el("li"); const t = el("span");
+      t.append(el("b", null, cp.point || ""));
+      if (cp.reasoning) t.append(document.createTextNode(" " + cp.reasoning));
+      li.append(el("span", "mark green", "✓"), t); ul.append(li);
+    });
+    s.append(ul); body.append(s);
+  }
+
+  /* 4. Details, folded away */
+  const folds = el("div", "folds");
+
   if (c.mode === "text" && c.input) {
-    const s = section("Flagged passages");
-    const { box, count, spans } = annotate(c.input, r.passages);
+    const { box, count } = annotate(c.input, r.passages);
+    const f = fold("See it in the text", count || null);
     if (count) {
       const lg = el("div", "legend");
       const a = el("span"); a.append(el("i", "sw ai"), document.createTextNode("Sounds AI-written"));
       const b = el("span"); b.append(el("i", "sw mis"), document.createTextNode("False or misleading"));
       lg.append(a, b);
-      s.append(lg, box);
-      const ul = el("ul", "notes");
-      spans.forEach(sp => { const li = el("li"); li.append(el("b", null, sp.kind === "ai" ? "AI" : "Misleading"), el("span", null, "“" + c.input.slice(sp.start, sp.end) + "” — " + sp.reason)); ul.append(li); });
-      s.append(ul);
-    } else s.append(el("p", "empty", "No single passage stood out; the assessment is based on the text as a whole."));
-    body.append(s);
-  }
-
-  if (Array.isArray(r.signals) && r.signals.length) {
-    const s = section("What we noticed");
-    const ul = el("ul", "signals");
-    r.signals.forEach(sig => {
-      const red = sig.type !== "reassuring";
-      const li = el("li"); li.append(el("span", "mark " + (red ? "red" : "green"), red ? "!" : "✓"), el("span", null, sig.text));
-      ul.append(li);
-    });
-    s.append(ul); body.append(s);
-  }
-
-  if (c.stats) {
-    const s = section("Text fingerprint");
-    const g = el("div", "stats");
-    const st = c.stats;
-    [[st.words, "words"], [st.avgSentence, "avg. words per sentence"], [st.variation + "%", "sentence-length variation (AI text tends to be low)"], [st.diversity + "%", "word variety"], [st.caps + st.exclaim, "all-caps words and exclamation marks"], [st.urgent, "urgency or sensational phrases"], [st.sourceCues, "source or attribution cues"]]
-      .forEach(([v, k]) => { const d = el("div", "stat"); d.append(el("span", "v", String(v)), el("span", "k", k)); g.append(d); });
-    s.append(g); body.append(s);
-  }
-
-  if (c.forensics && c.forensics.length) {
-    const s = section("File forensics (checked in your browser)");
-    const ul = el("ul", "meta");
-    c.forensics.forEach(nn => {
-      const li = el("li");
-      const sym = nn.tone === "ai" ? ["red", "!"] : nn.tone === "camera" ? ["green", "✓"] : nn.tone === "edit" ? ["info", "✎"] : ["info", "i"];
-      li.append(el("span", "mark " + sym[0], sym[1]), el("span", "k", nn.k), el("span", "v", nn.v));
-      ul.append(li);
-    });
-    s.append(ul); body.append(s);
+      f.b.append(lg, box, el("p", "empty", "Tap or hover a highlight to see why it was flagged."));
+    } else f.b.append(el("p", "empty", "No single passage stood out; the assessment is based on the text as a whole."), box);
+    folds.append(f.d);
   }
 
   if (Array.isArray(r.claims) && r.claims.length) {
-    const s = section("Claims in it");
+    const f = fold("Claims to check", r.claims.length);
     const wrap = el("div", "table-wrap"); const t = el("table", "claims");
     const thead = el("thead"); const hr = el("tr"); ["Claim", "Assessment", "Why", "Check"].forEach(h => hr.append(el("th", null, h))); thead.append(hr);
     const tb = el("tbody");
@@ -556,27 +636,50 @@ function render(c, isExample) {
       const q = encodeURIComponent(cl.search || cl.claim || "");
       const links = el("td");
       const g = el("a", null, "News"); g.href = "https://news.google.com/search?q=" + q; g.target = "_blank"; g.rel = "noopener";
-      const f = el("a", null, "Fact checks"); f.href = "https://toolbox.google.com/factcheck/explorer/search/" + q; f.target = "_blank"; f.rel = "noopener";
-      links.append(g, document.createTextNode(" · "), f);
+      const fc = el("a", null, "Fact checks"); fc.href = "https://toolbox.google.com/factcheck/explorer/search/" + q; fc.target = "_blank"; fc.rel = "noopener";
+      links.append(g, document.createTextNode(" · "), fc);
       tr.append(el("td", null, cl.claim), a, el("td", null, cl.note || ""), links);
       tb.append(tr);
     });
-    t.append(thead, tb); wrap.append(t); s.append(wrap); body.append(s);
+    t.append(thead, tb); wrap.append(t); f.b.append(wrap); folds.append(f.d);
   }
 
   if (Array.isArray(r.check_next) && r.check_next.length) {
-    const s = section("How to confirm");
+    const f = fold("Check it yourself", r.check_next.length + (c.mode !== "text" ? 1 : 0));
     const ol = el("ol", "checks"); r.check_next.forEach(x => ol.append(el("li", null, x)));
     if (c.mode !== "text") {
       const li = el("li"); li.append(document.createTextNode("Reverse image search: "));
-      [["Google Lens", "https://lens.google.com/"], ["TinEye", "https://tineye.com/"], ["Content Credentials", "https://contentcredentials.org/verify"]].forEach(([n, u], i) => {
-        if (i) li.append(document.createTextNode(" · ")); const a = el("a", null, n); a.href = u; a.target = "_blank"; a.rel = "noopener"; li.append(a);
+      [["Google Lens", "https://lens.google.com/"], ["TinEye", "https://tineye.com/"], ["Content Credentials", "https://contentcredentials.org/verify"]].forEach(([nm, u], i) => {
+        if (i) li.append(document.createTextNode(" · ")); const a = el("a", null, nm); a.href = u; a.target = "_blank"; a.rel = "noopener"; li.append(a);
       });
       ol.append(li);
     }
-    s.append(ol); body.append(s);
+    f.b.append(ol); folds.append(f.d);
   }
 
+  if (c.stats) {
+    const f = fold("Writing measurements");
+    const g = el("div", "stats");
+    const st = c.stats;
+    [[st.variation + "%", "sentence-length variation (AI text tends to be low)"], [st.diversity + "%", "word variety"], [st.caps + st.exclaim, "all-caps words and exclamation marks"], [st.urgent, "urgency or sensational phrases"], [st.sourceCues, "source or attribution cues"], [st.words, "words"]]
+      .forEach(([v, k]) => { const d = el("div", "stat"); d.append(el("span", "v", String(v)), el("span", "k", k)); g.append(d); });
+    f.b.append(g); folds.append(f.d);
+  }
+
+  if (c.forensics && c.forensics.length) {
+    const flagged = c.forensics.filter(x => x.tone === "ai").length;
+    const f = fold("Hidden file data", flagged ? flagged + " AI trace" + (flagged > 1 ? "s" : "") : null);
+    const ul = el("ul", "meta");
+    c.forensics.forEach(nn => {
+      const li = el("li");
+      const sym = nn.tone === "ai" ? ["red", "!"] : nn.tone === "camera" ? ["green", "✓"] : nn.tone === "edit" ? ["info", "✎"] : ["info", "i"];
+      li.append(el("span", "mark " + sym[0], sym[1]), el("span", "k", nn.k), el("span", "v", nn.v));
+      ul.append(li);
+    });
+    f.b.append(ul); folds.append(f.d);
+  }
+
+  if (folds.childElementCount) body.append(folds);
   body.append(el("p", "fine", "This is an estimate, not proof. AI detectors make mistakes in both directions, and Claude cannot check today’s news during a check."));
 }
 
@@ -586,7 +689,7 @@ function loadHist() { try { return JSON.parse(localStorage.getItem(HKEY) || "[]"
 function saveHist(h) { try { localStorage.setItem(HKEY, JSON.stringify(h.slice(0, 25))); } catch (_) {} }
 function renderHist() {
   const h = loadHist(); const ul = $("hist"); ul.replaceChildren();
-  $("hist-empty").hidden = h.length > 0; $("clear-hist").disabled = !h.length;
+  $("hist-empty").hidden = h.length > 0; $("clear-hist").disabled = !h.length; $("hist-count").textContent = String(h.length);
   h.forEach((c, i) => {
     const li = el("li"); const b = el("button");
     const title = c.mode === "text" ? (c.input || "").slice(0, 90) : (c.fileName || c.mode);
@@ -610,6 +713,8 @@ function setMode(m) {
   $("pane-text").hidden = m !== "text";
   $("pane-media").hidden = m === "text";
   $("frames-opt").hidden = m !== "video";
+  $("src-wrap").hidden = m !== "text";
+  $("ctx-wrap").hidden = m === "text";
   if (m === "image") {
     $("drop-title").textContent = "Drop a picture here or tap to choose one";
     $("drop-hint").textContent = "JPEG, PNG, WebP or GIF · metadata is read in your browser";
@@ -658,10 +763,17 @@ const FORMAT = `Reply with only one JSON object in this shape:
 {"ai_generated": 0-100 integer (how likely the content was created or substantially altered by AI),
  "misleading": 0-100 integer (how likely the content is false, fabricated, or misleading as presented),
  "confidence": "low" | "medium" | "high",
- "verdict": "one short sentence",
- "summary": "2-3 plain sentences explaining the main reasons",
- "tactics": ["short name of a manipulation tactic present, e.g. Clickbait, False context, Fake quote, Emotional language, Urgency, No source, Cherry-picked data, Impersonation, Share bait, Conspiracy framing"] (0-6 items, only ones actually present),
- "signals": [{"type": "red_flag" | "reassuring", "text": "short observation"}] (3-7 items),
+ "verdict": "2-5 words, e.g. Probably fake / Likely real / Real photo, false caption / Likely AI-generated / Can't tell yet",
+ "bottom_line": "1-2 sentences, max 40 words, the core reason, said the way you'd explain it to a friend",
+ "tactics": ["short name of a manipulation tactic present, e.g. Clickbait, False context, Fake quote, Emotional language, Urgency, No source, Cherry-picked data, Impersonation, Share bait, Conspiracy framing"] (0-5 items, only ones actually present),
+ "arguments": [{"point": "the argument as a short headline, max 10 words",
+                "about": "fake" | "ai",
+                "weight": "strong" | "moderate" | "weak" (how much this alone should move someone),
+                "tactic": "optional manipulation tactic name, or omit",
+                "evidence": "the specific thing in the content that shows it: an exact short quote in “curly quotes”, or a precise visual observation with location, e.g. 'left hand has six fingers'",
+                "reasoning": "2-3 plain sentences, max 60 words: WHY this points to fake or AI. Explain the logic and what real news or real photos would look like instead. No jargon."}]
+              (2-4 items, strongest first; these are the heart of the answer, make each one a real argument, not a label),
+ "counterpoints": [{"point": "short headline", "reasoning": "1-2 sentences: evidence pointing the other way or why it might be genuine"}] (0-2 items; include when honest),
  "passages": [{"quote": "EXACT substring copied from the text, 4-25 words", "kind": "ai" | "misleading", "reason": "one short reason"}] (0-6 items; text only, empty for images),
  "claims": [{"claim": "a checkable claim", "assessment": "likely true" | "likely false" | "unverified" | "opinion", "note": "one short reason", "search": "3-8 word search query to verify it"}] (0-5 items),
  "check_next": ["concrete step to confirm"] (2-4 items)}
@@ -775,10 +887,13 @@ async function ask(e) {
 function reportMarkdown(c) {
   const r = c.result, L = [];
   L.push("# Second Look report", "", "Checked: " + new Date(c.date).toLocaleString() + " · " + ({ text: "Text", image: "Picture", video: "Video" }[c.mode]) + (c.deep ? " · deep analysis" : ""), "");
-  L.push("## " + (r.verdict || "Result"), "", r.summary || "", "");
-  L.push("- Likely AI-generated: **" + clamp(r.ai_generated) + "%**", "- Likely false or misleading: **" + clamp(r.misleading) + "%**", "- Confidence: " + (r.confidence || "low"), "");
+  L.push("## " + (r.verdict || "Result"), "", r.bottom_line || r.summary || "", "");
+  L.push("- Likely false or misleading: **" + clamp(r.misleading) + "%**", "- Likely AI-generated: **" + clamp(r.ai_generated) + "%**", "- Confidence: " + (r.confidence || "low"), "");
   if (r.tactics?.length) L.push("**Tactics:** " + r.tactics.join(", "), "");
-  if (r.signals?.length) { L.push("## What we noticed"); r.signals.forEach(s => L.push("- " + (s.type === "reassuring" ? "✓ " : "⚠ ") + s.text)); L.push(""); }
+  const args = argsOf(r);
+  if (args.length) { L.push("## Why we think so", ""); args.forEach((a, i) => { L.push("### " + (i + 1) + ". " + a.point + " _(" + (a.weight || "moderate") + " sign)_"); if (a.evidence) L.push("", "**What we saw:** " + a.evidence); if (a.reasoning) L.push("", "**Why it matters:** " + a.reasoning); L.push(""); }); }
+  const cps = countersOf(r);
+  if (cps.length) { L.push("## On the other hand"); cps.forEach(cp => L.push("- **" + cp.point + "**" + (cp.reasoning ? " " + cp.reasoning : ""))); L.push(""); }
   if (r.passages?.length) { L.push("## Flagged passages"); r.passages.forEach(p => L.push("- > " + p.quote + "  \n  " + (p.kind === "ai" ? "AI-sounding" : "Misleading") + ": " + p.reason)); L.push(""); }
   if (c.forensics?.length) { L.push("## File forensics"); c.forensics.forEach(n => L.push("- **" + n.k + ":** " + n.v)); L.push(""); }
   if (r.claims?.length) { L.push("## Claims", "", "| Claim | Assessment | Why |", "|---|---|---|"); r.claims.forEach(x => L.push("| " + [x.claim, x.assessment, x.note].map(v => String(v || "").replace(/\|/g, "/")).join(" | ") + " |")); L.push(""); }
