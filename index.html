@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body>
+<title>Second Look</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single verification desk column; intake slip on top, findings report below, case history at the end. */
+:root {
+  --bg: #f3f5f7;
+  --surface: #ffffff;
+  --fg: #16202a;
+  --muted: #5a6875;
+  --line: #d6dde3;
+  --accent: #1f5fa8;
+  --accent-ink: #ffffff;
+  --ok: #2f7d4f;
+  --warn: #b7791f;
+  --bad: #c0392b;
+  --soft: #e8eef4;
+  --hl-ai: #dfe9ff;
+  --hl-mis: #fde2dc;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f151b; --surface: #17202a; --fg: #e4eaf0; --muted: #93a1ae; --line: #2a3643;
+    --accent: #6ea8ec; --accent-ink: #0b1218; --ok: #5fbf85; --warn: #e0a84a; --bad: #ef6f61; --soft: #1e2a36;
+    --hl-ai: #213a5e; --hl-mis: #5a2a24;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f151b; --surface: #17202a; --fg: #e4eaf0; --muted: #93a1ae; --line: #2a3643;
+  --accent: #6ea8ec; --accent-ink: #0b1218; --ok: #5fbf85; --warn: #e0a84a; --bad: #ef6f61; --soft: #1e2a36;
+  --hl-ai: #213a5e; --hl-mis: #5a2a24;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 780px; margin: 0 auto; padding: 32px 16px 64px; display: grid; gap: 24px; }
+h1, h2, h3, .label, button, .tab { font-family: var(--font-display); }
+h1 { font-size: 2.4rem; line-height: 1.05; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+h2 { font-size: 1.15rem; margin: 0; text-transform: uppercase; letter-spacing: 0.06em; }
+h3 { margin: 0; }
+.lede { color: var(--muted); margin: 8px 0 0; max-width: 60ch; }
+.label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+.mono { font-family: var(--font-mono); font-size: 0.82rem; }
+
+.slip, .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 20px; display: grid; gap: 16px; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.tab { background: none; border: 0; border-bottom: 3px solid transparent; padding: 8px 14px; font-size: 1rem; font-weight: 600; color: var(--muted); cursor: pointer; margin-bottom: -1px; }
+.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.tab:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible, .drop:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+textarea, input[type="text"] { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--fg); font: inherit; font-size: 0.95rem; }
+textarea { min-height: 160px; resize: vertical; }
+textarea.small { min-height: 72px; }
+.drop { border: 2px dashed var(--line); border-radius: 6px; padding: 24px 16px; text-align: center; color: var(--muted); display: grid; gap: 8px; justify-items: center; cursor: pointer; position: relative; }
+.drop.over { border-color: var(--accent); background: var(--soft); }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.preview { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.preview img { height: 88px; width: auto; border-radius: 4px; border: 1px solid var(--line); }
+.row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.opts { display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.92rem; }
+.opts label { display: inline-flex; gap: 8px; align-items: center; cursor: pointer; }
+.opts select { font: inherit; padding: 4px 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--fg); }
+button.primary { background: var(--accent); color: var(--accent-ink); border: 0; padding: 11px 22px; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+button.primary:disabled { opacity: 0.55; cursor: progress; }
+button.ghost { background: none; border: 1px solid var(--line); color: var(--fg); padding: 8px 14px; border-radius: 4px; font-size: 0.92rem; cursor: pointer; }
+button.ghost:disabled { opacity: 0.5; cursor: default; }
+.status { color: var(--muted); font-size: 0.92rem; }
+.status.err { color: var(--bad); }
+
+.report { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.report-head { padding: 16px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+.tag { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 3px; background: var(--soft); color: var(--muted); }
+.report-body { padding: 20px; display: grid; gap: 28px; }
+.verdict { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; line-height: 1.2; margin: 0; text-wrap: balance; }
+.summary { margin: 6px 0 0; max-width: 65ch; }
+.meters { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+.meter { display: grid; gap: 6px; min-width: 0; }
+.meter-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.pct { font-family: var(--font-display); font-size: 2.2rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.track { position: relative; height: 10px; border-radius: 5px; background: linear-gradient(90deg, var(--ok) 0 33%, var(--warn) 33% 66%, var(--bad) 66% 100%); opacity: 0.9; }
+.needle { position: absolute; top: -5px; width: 4px; height: 20px; margin-left: -2px; background: var(--fg); border-radius: 2px; transition: left 0.6s ease; }
+.ticks { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.band { font-size: 0.88rem; color: var(--muted); }
+.conf { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.dots { display: inline-flex; gap: 3px; }
+.dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); display: block; }
+.dots i.on { background: var(--accent); }
+.section { display: grid; gap: 8px; min-width: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--font-display); font-size: 0.85rem; padding: 3px 10px; border-radius: 12px; background: var(--soft); border: 1px solid var(--line); }
+.signals { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.signals li { display: grid; grid-template-columns: 20px 1fr; gap: 8px; align-items: start; }
+.mark { font-family: var(--font-mono); font-weight: 500; text-align: center; border-radius: 3px; font-size: 0.8rem; line-height: 20px; }
+.mark.red { background: color-mix(in srgb, var(--bad) 18%, transparent); color: var(--bad); }
+.mark.green { background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok); }
+.mark.info { background: var(--soft); color: var(--muted); }
+.claims { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
+.claims th { text-align: left; font-family: var(--font-display); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.claims td { padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.claims a { color: var(--accent); }
+.pill { display: inline-block; white-space: nowrap; font-family: var(--font-mono); font-size: 0.72rem; padding: 2px 7px; border-radius: 10px; border: 1px solid currentColor; }
+.pill.true { color: var(--ok); } .pill.false { color: var(--bad); } .pill.unverified { color: var(--warn); } .pill.opinion { color: var(--muted); }
+.table-wrap { overflow-x: auto; }
+.checks { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.annotated { background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 14px; max-height: 360px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.95rem; }
+mark { color: inherit; border-radius: 2px; padding: 0 1px; cursor: help; }
+mark.ai { background: var(--hl-ai); border-bottom: 2px solid var(--accent); }
+mark.mis { background: var(--hl-mis); border-bottom: 2px solid var(--bad); }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.82rem; color: var(--muted); }
+.legend span { display: inline-flex; gap: 6px; align-items: center; }
+.sw { width: 14px; height: 10px; border-radius: 2px; display: inline-block; }
+.sw.ai { background: var(--hl-ai); border-bottom: 2px solid var(--accent); }
+.sw.mis { background: var(--hl-mis); border-bottom: 2px solid var(--bad); }
+.notes { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; font-size: 0.92rem; }
+.notes li { display: grid; grid-template-columns: auto 1fr; gap: 10px; }
+.notes b { font-family: var(--font-display); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.stat { border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; display: grid; gap: 2px; min-width: 0; }
+.stat .v { font-family: var(--font-display); font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat .k { font-size: 0.78rem; color: var(--muted); line-height: 1.3; }
+.meta { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.meta li { display: grid; grid-template-columns: 20px minmax(110px, auto) 1fr; gap: 8px; align-items: start; font-size: 0.92rem; }
+.meta .k { font-family: var(--font-display); font-weight: 600; }
+.meta .v { font-family: var(--font-mono); font-size: 0.82rem; overflow-wrap: anywhere; min-width: 0; }
+.chat { display: grid; gap: 10px; }
+.msg { padding: 10px 12px; border-radius: 6px; max-width: 65ch; white-space: pre-wrap; font-size: 0.95rem; }
+.msg.q { background: var(--soft); justify-self: end; font-family: var(--font-display); }
+.msg.a { border: 1px solid var(--line); }
+.ask { display: flex; gap: 8px; flex-wrap: wrap; }
+.ask input { flex: 1 1 220px; min-width: 0; }
+.fine { font-size: 0.85rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; margin: 0; }
+.hist { list-style: none; padding: 0; margin: 0; display: grid; }
+.hist li + li { border-top: 1px solid var(--line); }
+.hist button { all: unset; box-sizing: border-box; width: 100%; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 10px 4px; cursor: pointer; }
+.hist button:hover .h-title, .hist button:focus-visible .h-title { color: var(--accent); }
+.hist button:focus-visible { outline: 2px solid var(--accent); }
+.h-title { font-family: var(--font-display); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.h-sub { font-size: 0.8rem; color: var(--muted); grid-column: 1; }
+.h-nums { font-family: var(--font-mono); font-size: 0.8rem; grid-row: 1 / span 2; grid-column: 2; align-self: center; text-align: right; font-variant-numeric: tabular-nums; }
+.empty { color: var(--muted); font-size: 0.92rem; margin: 0; }
+details summary { cursor: pointer; font-family: var(--font-display); font-weight: 600; }
+.about { font-size: 0.92rem; color: var(--muted); display: grid; gap: 8px; }
+.about p { margin: 0; max-width: 65ch; }
+@media (max-width: 480px) { h1 { font-size: 1.9rem; } .pct { font-size: 1.8rem; } .meta li { grid-template-columns: 20px 1fr; } .meta .v { grid-column: 2; } }
+@media (prefers-reduced-motion: reduce) { .needle { transition: none; } }
+</style>
+
+<main class="wrap">
+  <header>
+    <div class="label">Fake news &amp; AI content check</div>
+    <h1>Second Look</h1>
+    <p class="lede">Paste an article or post, or upload a picture or video clip. You get an estimate of how likely it is to be AI-generated and how likely it is to be false or misleading, with the evidence behind each number.</p>
+  </header>
+
+  <section class="slip" aria-label="What to check">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-text" aria-selected="true" data-mode="text">Text</button>
+      <button class="tab" role="tab" id="tab-image" aria-selected="false" data-mode="image">Picture</button>
+      <button class="tab" role="tab" id="tab-video" aria-selected="false" data-mode="video">Video</button>
+    </div>
+
+    <div id="pane-text">
+      <label class="label" for="text-in">Text to check</label>
+      <textarea id="text-in" placeholder="Paste a news article, headline, social media post or message…"></textarea>
+      <label class="label" for="src-in" style="display:block;margin-top:12px">Where you saw it (optional)</label>
+      <input type="text" id="src-in" placeholder="e.g. a link, “WhatsApp group”, “Facebook page called Daily Truth”">
+    </div>
+
+    <div id="pane-media" hidden>
+      <label class="drop" id="drop" for="file-in">
+        <input type="file" id="file-in">
+        <strong id="drop-title">Drop a picture here or tap to choose one</strong>
+        <span class="mono" id="drop-hint">JPEG, PNG, WebP or GIF</span>
+        <div class="preview" id="preview"></div>
+      </label>
+      <label class="label" for="ctx-in" style="display:block;margin-top:12px">Caption or claim that came with it (optional)</label>
+      <textarea id="ctx-in" class="small" placeholder="e.g. “Photo shows flooding in Paris yesterday”"></textarea>
+    </div>
+
+    <div class="opts">
+      <label><input type="checkbox" id="deep"> Deep analysis (slower, more thorough)</label>
+      <label id="frames-opt" hidden>Video frames
+        <select id="frames"><option>4</option><option selected>6</option><option>8</option><option>12</option></select>
+      </label>
+    </div>
+
+    <div class="row">
+      <button class="primary" id="go">Check it</button>
+      <button class="ghost" id="stop" hidden>Stop</button>
+      <span class="status" id="status" role="status"></span>
+    </div>
+  </section>
+
+  <section class="report" id="report" aria-live="polite">
+    <div class="report-head">
+      <h2>Findings</h2>
+      <div class="row">
+        <span class="tag" id="report-tag">Example result</span>
+        <button class="ghost" id="save-md" hidden>Save report</button>
+      </div>
+    </div>
+    <div class="report-body" id="report-body"></div>
+  </section>
+
+  <section class="panel" id="followup" hidden aria-label="Follow-up questions">
+    <h2>Ask about this result</h2>
+    <div class="chat" id="chat"></div>
+    <form class="ask" id="ask-form">
+      <label class="label" for="ask-in" hidden>Your question</label>
+      <input type="text" id="ask-in" placeholder="e.g. Which part looks most fake? How do I verify the quote?" autocomplete="off">
+      <button class="primary" id="ask-go" type="submit">Ask</button>
+    </form>
+  </section>
+
+  <section class="panel" aria-label="Past checks">
+    <div class="row" style="justify-content:space-between">
+      <h2>Past checks</h2>
+      <button class="ghost" id="clear-hist">Clear</button>
+    </div>
+    <ul class="hist" id="hist"></ul>
+    <p class="empty" id="hist-empty">Your checks appear here, saved only in this browser.</p>
+  </section>
+
+  <details class="about">
+    <summary>How the estimate works</summary>
+    <p><strong>Before Claude looks at anything</strong>, the page inspects the file in your browser. For pictures it reads hidden metadata: camera make and model, editing software, Content Credentials (C2PA) and generator tags that tools like Stable Diffusion, DALL·E, Midjourney and Firefly can leave behind. For text it measures sentence rhythm, word variety, emotional and urgent wording, and how often sources are cited.</p>
+    <p><strong>Then Claude reads it</strong> along with those measurements and weighs writing patterns typical of AI models, visual artifacts in hands, text and lighting, manipulation tactics, missing sources, and claims that contradict well-established facts. It marks the exact passages that raised concern.</p>
+    <p><strong>Videos</strong> are checked as evenly spaced still frames. Sound and motion are not checked.</p>
+    <p>Claude does not search the web during a check, so it cannot confirm breaking news. Its knowledge stops at a cutoff date. Use the search links and suggested checks to confirm with trusted sources.</p>
+    <p>No detector is fully reliable. Treat the percentages as a starting point for your own judgement, not as proof.</p>
+  </details>
+</main>
+
+<script>
+const EXAMPLE_TEXT = "BREAKING: The city council has BANNED all private cars starting tomorrow morning!!! The mayor announced it on TV last night. Officials say the move will transform the city, reduce pollution, and create a healthier future for everyone. SHARE before it's deleted!";
+const EXAMPLE = {
+  ai_generated: 64,
+  misleading: 83,
+  confidence: "medium",
+  verdict: "Probably misleading, with some signs of AI writing",
+  summary: "Example: a viral post claiming a city banned all cars overnight. The tone is alarmist, no officials or documents are named, and one sentence follows a pattern common in AI-written text.",
+  tactics: ["Urgency", "No source", "Emotional language", "Share bait"],
+  signals: [
+    { type: "red_flag", text: "Urgent, emotional language and all-caps words" },
+    { type: "red_flag", text: "No named official, date, or link to a statement" },
+    { type: "red_flag", text: "Generic three-part phrasing typical of AI-generated text" },
+    { type: "reassuring", text: "Cities do sometimes announce car restrictions" }
+  ],
+  passages: [
+    { quote: "BANNED all private cars starting tomorrow morning", kind: "misleading", reason: "Bans like this are announced months ahead and phased in." },
+    { quote: "transform the city, reduce pollution, and create a healthier future for everyone", kind: "ai", reason: "Vague, balanced triple phrasing common in AI writing." },
+    { quote: "SHARE before it's deleted!", kind: "misleading", reason: "Classic share-bait used to spread false stories fast." }
+  ],
+  claims: [
+    { claim: "All private cars are banned starting tomorrow", assessment: "likely false", note: "Bans like this are announced months ahead and phased in.", search: "city council bans all private cars" },
+    { claim: "The mayor announced it on TV last night", assessment: "unverified", note: "No broadcaster or date is given.", search: "mayor announces car ban" }
+  ],
+  check_next: ["Search the city government’s official website for the announcement", "Look for the story on two established news outlets", "Run a reverse image search on any photo attached to the post"]
+};
+
+const $ = (id) => document.getElementById(id);
+let mode = "text";
+let file = null;
+let sample = null, downloads = null;
+let imageLimits = null;
+let ctl = null;
+let current = null;        // {mode, input, result, forensics, date}
+let chatTurns = [];
+
+function clamp(n) { n = Math.round(Number(n)); return isFinite(n) ? Math.max(0, Math.min(100, n)) : 0; }
+function bandFor(v) { return v < 34 ? "Low" : v < 67 ? "Moderate" : "High"; }
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function setStatus(t, err) { $("status").textContent = t; $("status").classList.toggle("err", !!err); }
+
+/* ---------- Local text fingerprint ---------- */
+const URGENT = ["breaking","urgent","shocking","share","banned","exposed","they don't want","wake up","before it's deleted","100%","must see","you won't believe","secret","cover-up","miracle","act now","outrage","destroyed"];
+function textStats(t) {
+  const sentences = t.split(/(?<=[.!?])\s+|\n+/).map(s => s.trim()).filter(s => s.split(/\s+/).length >= 2);
+  const words = (t.match(/[\p{L}\p{N}']+/gu) || []);
+  const lens = sentences.map(s => (s.match(/[\p{L}\p{N}']+/gu) || []).length);
+  const mean = lens.length ? lens.reduce((a, b) => a + b, 0) / lens.length : 0;
+  const sd = lens.length > 1 ? Math.sqrt(lens.reduce((a, b) => a + (b - mean) ** 2, 0) / lens.length) : 0;
+  const sampleW = words.slice(0, 400).map(w => w.toLowerCase());
+  const lower = t.toLowerCase();
+  return {
+    words: words.length,
+    sentences: sentences.length,
+    avgSentence: Math.round(mean * 10) / 10,
+    variation: mean ? Math.round((sd / mean) * 100) : 0,
+    diversity: sampleW.length ? Math.round(new Set(sampleW).size / sampleW.length * 100) : 0,
+    caps: words.filter(w => w.length > 2 && w === w.toUpperCase() && /\p{L}/u.test(w)).length,
+    exclaim: (t.match(/!/g) || []).length,
+    urgent: URGENT.filter(k => lower.includes(k)).length,
+    sourceCues: (lower.match(/according to|said|reported|study|https?:\/\/|\bsource\b|“|"/g) || []).length
+  };
+}
+function statsText(s) {
+  return `Words: ${s.words}; sentences: ${s.sentences}; average sentence length: ${s.avgSentence} words; sentence-length variation: ${s.variation}% (human writing is often above ~50%, AI text is often more uniform); word variety: ${s.diversity}% unique in first 400 words; ALL-CAPS words: ${s.caps}; exclamation marks: ${s.exclaim}; urgency/sensational phrases: ${s.urgent}; source/attribution cues: ${s.sourceCues}.`;
+}
+
+/* ---------- Local file forensics ---------- */
+const GENERATORS = [
+  ["Stable Diffusion", /stable[\s_-]?diffusion|sd_xl|sdxl|automatic1111|negative prompt:/i],
+  ["ComfyUI", /comfyui|"class_type"/i],
+  ["Midjourney", /midjourney/i],
+  ["DALL·E / OpenAI", /dall[\s·.-]?e|openai/i],
+  ["Adobe Firefly", /firefly/i],
+  ["Google AI (Imagen/Gemini)", /imagen|gemini|synthid/i],
+  ["Flux", /black forest labs|flux\.1/i],
+  ["NovelAI", /novelai/i],
+  ["Leonardo.ai", /leonardo\.ai/i],
+  ["Runway / Sora / Pika", /runwayml|\bsora\b|pika labs/i]
+];
+function latin1(u8) { let s = ""; const CH = 32768; for (let i = 0; i < u8.length; i += CH) s += String.fromCharCode.apply(null, u8.subarray(i, i + CH)); return s; }
+function readExif(dv, tiff) {
+  const out = {};
+  const le = dv.getUint16(tiff) === 0x4949;
+  const u16 = (o) => dv.getUint16(o, le), u32 = (o) => dv.getUint32(o, le);
+  const want = { 0x010F: "Camera make", 0x0110: "Camera model", 0x0131: "Software", 0x0132: "Modified", 0x013B: "Artist", 0x9003: "Taken", 0xA434: "Lens", 0x010E: "Description" };
+  const readIfd = (off, depth) => {
+    if (off <= 0 || tiff + off + 2 > dv.byteLength || depth > 2) return;
+    const n = u16(tiff + off);
+    for (let i = 0; i < n && i < 200; i++) {
+      const e = tiff + off + 2 + i * 12; if (e + 12 > dv.byteLength) break;
+      const tag = u16(e), type = u16(e + 2), count = u32(e + 4);
+      if (tag === 0x8769) { readIfd(u32(e + 8), depth + 1); continue; }
+      if (want[tag] && type === 2) {
+        const p = count <= 4 ? e + 8 : tiff + u32(e + 8);
+        let s = ""; for (let k = 0; k < count - 1 && p + k < dv.byteLength && k < 200; k++) s += String.fromCharCode(dv.getUint8(p + k));
+        s = s.replace(/\0/g, "").trim(); if (s) out[want[tag]] = s;
+      }
+    }
+  };
+  readIfd(u32(tiff + 4), 0);
+  return out;
+}
+function pngText(dv, u8) {
+  const out = [];
+  let o = 8;
+  while (o + 12 <= dv.byteLength && out.length < 30) {
+    const len = dv.getUint32(o), type = String.fromCharCode(u8[o + 4], u8[o + 5], u8[o + 6], u8[o + 7]);
+    if (type === "tEXt" || type === "iTXt" || type === "zTXt") {
+      const d = u8.subarray(o + 8, o + 8 + Math.min(len, 4000));
+      const z = d.indexOf(0);
+      const key = latin1(d.subarray(0, z > 0 ? z : 0));
+      let val = "";
+      if (type === "tEXt") val = latin1(d.subarray(z + 1));
+      else if (type === "iTXt" && d[z + 1] === 0) { let p = z + 3; p = d.indexOf(0, p) + 1; p = d.indexOf(0, p) + 1; try { val = new TextDecoder().decode(d.subarray(p)); } catch (_) {} }
+      else val = "(compressed)";
+      out.push({ key, val });
+    }
+    if (type === "IEND") break;
+    o += 12 + len;
+  }
+  return out;
+}
+async function inspectFile(f) {
+  const notes = [];   // {tone: "ai"|"edit"|"camera"|"info", k, v}
+  try {
+    const head = new Uint8Array(await f.slice(0, 4 * 1048576).arrayBuffer());
+    const tail = f.size > 4 * 1048576 ? new Uint8Array(await f.slice(-262144).arrayBuffer()) : new Uint8Array(0);
+    const dv = new DataView(head.buffer);
+    const text = latin1(head) + latin1(tail);
+
+    if (head[0] === 0xFF && head[1] === 0xD8) {
+      let o = 2;
+      while (o + 4 < head.length && head[o] === 0xFF) {
+        const m = head[o + 1], len = dv.getUint16(o + 2);
+        if (m === 0xE1 && latin1(head.subarray(o + 4, o + 10)) === "Exif\0\0") {
+          const ex = readExif(dv, o + 10);
+          Object.entries(ex).forEach(([k, v]) => notes.push({ tone: k.startsWith("Camera") || k === "Lens" || k === "Taken" ? "camera" : "info", k, v }));
+          break;
+        }
+        if (m === 0xDA) break;
+        o += 2 + len;
+      }
+    } else if (head[0] === 0x89 && head[1] === 0x50) {
+      pngText(dv, head).forEach(({ key, val }) => {
+        const k = key.toLowerCase();
+        const ai = ["parameters", "prompt", "workflow", "invokeai_metadata", "sd-metadata", "dream"].includes(k);
+        notes.push({ tone: ai ? "ai" : "info", k: "PNG “" + key + "”", v: val.slice(0, 160) + (val.length > 160 ? "…" : "") });
+      });
+    }
+
+    const xmp = text.match(/<x:xmpmeta[\s\S]{0,20000}?<\/x:xmpmeta>/);
+    if (xmp) {
+      const ct = xmp[0].match(/CreatorTool(?:="|>)([^"<]+)/); if (ct) notes.push({ tone: "edit", k: "Created with", v: ct[1] });
+      const dst = xmp[0].match(/DigitalSourceType(?:="|>)[^"<]*?([A-Za-z]+)["<]/);
+      if (dst) {
+        const v = dst[1];
+        const ai = /trainedAlgorithmicMedia|compositeWithTrainedAlgorithmicMedia|algorithmicMedia/i.test(v);
+        notes.push({ tone: ai ? "ai" : "info", k: "Source type", v: ai ? v + " (marked as AI-generated)" : v });
+      }
+      if (/photoshop:History|xmpMM:History/.test(xmp[0])) notes.push({ tone: "edit", k: "Edit history", v: "File records editing steps" });
+    }
+    if (/c2pa|jumbf|\bjumb\b|contentauth/i.test(text)) notes.push({ tone: "info", k: "Content Credentials", v: "C2PA provenance data present. Check it at contentcredentials.org/verify" });
+    if (/trainedAlgorithmicMedia/.test(text) && !notes.some(n => n.tone === "ai" && n.k === "Source type")) notes.push({ tone: "ai", k: "AI label", v: "File is labelled trainedAlgorithmicMedia (AI-generated)" });
+    const seen = new Set();
+    GENERATORS.forEach(([name, re]) => { if (re.test(text) && !seen.has(name)) { seen.add(name); notes.push({ tone: "ai", k: "Generator trace", v: name + " signature found in file data" }); } });
+
+    if (f.type.startsWith("image/")) {
+      const dims = await new Promise((res) => { const i = new Image(); const u = URL.createObjectURL(f); i.onload = () => { res([i.naturalWidth, i.naturalHeight]); URL.revokeObjectURL(u); }; i.onerror = () => res(null); i.src = u; });
+      if (dims) {
+        const common = [512, 768, 1024, 1536, 2048];
+        const square = dims[0] === dims[1];
+        const aiSize = common.includes(dims[0]) && common.includes(dims[1]);
+        notes.push({ tone: aiSize ? "ai" : "info", k: "Dimensions", v: dims[0] + " × " + dims[1] + (aiSize ? " (a size AI generators often output)" : square ? " (square)" : "") });
+      }
+    }
+    if (!notes.some(n => n.tone === "camera" || n.tone === "ai" || n.tone === "edit" || n.k === "Content Credentials")) {
+      notes.push({ tone: "info", k: "Metadata", v: "None found. Common for screenshots and files from social media, which strip it. Not evidence either way." });
+    }
+  } catch (_) {
+    notes.push({ tone: "info", k: "Metadata", v: "Could not read this file’s metadata." });
+  }
+  notes.unshift({ tone: "info", k: "File", v: (f.type || "unknown type") + " · " + (f.size / 1048576).toFixed(2) + " MB" });
+  return notes;
+}
+function notesText(notes) { return notes.map(n => `- ${n.k}: ${n.v}`).join("\n"); }
+
+/* ---------- Rendering ---------- */
+function meter(title, value, note) {
+  const m = el("div", "meter");
+  const top = el("div", "meter-top");
+  top.append(el("span", "label", title), el("span", "pct", value + "%"));
+  const track = el("div", "track"); track.setAttribute("role", "img"); track.setAttribute("aria-label", title + ": " + value + " percent");
+  const needle = el("div", "needle"); needle.style.left = value + "%"; track.append(needle);
+  const ticks = el("div", "ticks"); ["0", "25", "50", "75", "100"].forEach(t => ticks.append(el("span", null, t)));
+  m.append(top, track, ticks, el("div", "band", bandFor(value) + " · " + note));
+  return m;
+}
+function pillClass(a) {
+  a = String(a || "").toLowerCase();
+  if (a.includes("false") || a.includes("mislead")) return "false";
+  if (a.includes("true") || a.includes("accurate")) return "true";
+  if (a.includes("opinion")) return "opinion";
+  return "unverified";
+}
+function section(title) { const s = el("div", "section"); s.append(el("h3", "label", title)); return s; }
+
+function annotate(text, passages) {
+  const box = el("div", "annotated");
+  const spans = [];
+  (passages || []).forEach(p => {
+    const q = String(p.quote || "").trim(); if (q.length < 4) return;
+    let i = text.indexOf(q);
+    if (i < 0) i = text.toLowerCase().indexOf(q.toLowerCase());
+    if (i < 0) return;
+    if (spans.some(s => i < s.end && i + q.length > s.start)) return;
+    spans.push({ start: i, end: i + q.length, kind: p.kind === "ai" ? "ai" : "mis", reason: p.reason || "" });
+  });
+  spans.sort((a, b) => a.start - b.start);
+  let pos = 0;
+  spans.forEach(s => {
+    box.append(document.createTextNode(text.slice(pos, s.start)));
+    const m = el("mark", s.kind, text.slice(s.start, s.end)); m.title = s.reason; box.append(m);
+    pos = s.end;
+  });
+  box.append(document.createTextNode(text.slice(pos)));
+  return { box, count: spans.length, spans };
+}
+
+function render(c, isExample) {
+  const r = c.result;
+  $("report-tag").textContent = isExample ? "Example result" : new Date(c.date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+  $("save-md").hidden = isExample || !downloads;
+  const body = $("report-body"); body.replaceChildren();
+  const ai = clamp(r.ai_generated), mis = clamp(r.misleading);
+
+  const head = el("div");
+  head.append(el("p", "verdict", r.verdict || "Result"), el("p", "summary", r.summary || ""));
+  body.append(head);
+
+  const meters = el("div", "meters");
+  meters.append(meter("Likely AI-generated", ai, "made or altered by AI"), meter("Likely false or misleading", mis, "content or framing"));
+  body.append(meters);
+
+  const conf = String(r.confidence || "low").toLowerCase();
+  const n = conf === "high" ? 3 : conf === "medium" ? 2 : 1;
+  const cw = el("div", "conf"); cw.append(el("span", "label", "Confidence"));
+  const dots = el("span", "dots"); for (let i = 0; i < 3; i++) dots.append(el("i", i < n ? "on" : ""));
+  cw.append(dots, el("span", "band", conf.charAt(0).toUpperCase() + conf.slice(1) + (c.deep ? " · deep analysis" : "")));
+  body.append(cw);
+
+  if (Array.isArray(r.tactics) && r.tactics.length) {
+    const s = section("Manipulation tactics spotted"); const ch = el("div", "chips");
+    r.tactics.forEach(t => ch.append(el("span", "chip", t))); s.append(ch); body.append(s);
+  }
+
+  if (c.mode === "text" && c.input) {
+    const s = section("Flagged passages");
+    const { box, count, spans } = annotate(c.input, r.passages);
+    if (count) {
+      const lg = el("div", "legend");
+      const a = el("span"); a.append(el("i", "sw ai"), document.createTextNode("Sounds AI-written"));
+      const b = el("span"); b.append(el("i", "sw mis"), document.createTextNode("False or misleading"));
+      lg.append(a, b);
+      s.append(lg, box);
+      const ul = el("ul", "notes");
+      spans.forEach(sp => { const li = el("li"); li.append(el("b", null, sp.kind === "ai" ? "AI" : "Misleading"), el("span", null, "“" + c.input.slice(sp.start, sp.end) + "” — " + sp.reason)); ul.append(li); });
+      s.append(ul);
+    } else s.append(el("p", "empty", "No single passage stood out; the assessment is based on the text as a whole."));
+    body.append(s);
+  }
+
+  if (Array.isArray(r.signals) && r.signals.length) {
+    const s = section("What we noticed");
+    const ul = el("ul", "signals");
+    r.signals.forEach(sig => {
+      const red = sig.type !== "reassuring";
+      const li = el("li"); li.append(el("span", "mark " + (red ? "red" : "green"), red ? "!" : "✓"), el("span", null, sig.text));
+      ul.append(li);
+    });
+    s.append(ul); body.append(s);
+  }
+
+  if (c.stats) {
+    const s = section("Text fingerprint");
+    const g = el("div", "stats");
+    const st = c.stats;
+    [[st.words, "words"], [st.avgSentence, "avg. words per sentence"], [st.variation + "%", "sentence-length variation (AI text tends to be low)"], [st.diversity + "%", "word variety"], [st.caps + st.exclaim, "all-caps words and exclamation marks"], [st.urgent, "urgency or sensational phrases"], [st.sourceCues, "source or attribution cues"]]
+      .forEach(([v, k]) => { const d = el("div", "stat"); d.append(el("span", "v", String(v)), el("span", "k", k)); g.append(d); });
+    s.append(g); body.append(s);
+  }
+
+  if (c.forensics && c.forensics.length) {
+    const s = section("File forensics (checked in your browser)");
+    const ul = el("ul", "meta");
+    c.forensics.forEach(nn => {
+      const li = el("li");
+      const sym = nn.tone === "ai" ? ["red", "!"] : nn.tone === "camera" ? ["green", "✓"] : nn.tone === "edit" ? ["info", "✎"] : ["info", "i"];
+      li.append(el("span", "mark " + sym[0], sym[1]), el("span", "k", nn.k), el("span", "v", nn.v));
+      ul.append(li);
+    });
+    s.append(ul); body.append(s);
+  }
+
+  if (Array.isArray(r.claims) && r.claims.length) {
+    const s = section("Claims in it");
+    const wrap = el("div", "table-wrap"); const t = el("table", "claims");
+    const thead = el("thead"); const hr = el("tr"); ["Claim", "Assessment", "Why", "Check"].forEach(h => hr.append(el("th", null, h))); thead.append(hr);
+    const tb = el("tbody");
+    r.claims.forEach(cl => {
+      const tr = el("tr");
+      const a = el("td"); a.append(el("span", "pill " + pillClass(cl.assessment), cl.assessment || "unverified"));
+      const q = encodeURIComponent(cl.search || cl.claim || "");
+      const links = el("td");
+      const g = el("a", null, "News"); g.href = "https://news.google.com/search?q=" + q; g.target = "_blank"; g.rel = "noopener";
+      const f = el("a", null, "Fact checks"); f.href = "https://toolbox.google.com/factcheck/explorer/search/" + q; f.target = "_blank"; f.rel = "noopener";
+      links.append(g, document.createTextNode(" · "), f);
+      tr.append(el("td", null, cl.claim), a, el("td", null, cl.note || ""), links);
+      tb.append(tr);
+    });
+    t.append(thead, tb); wrap.append(t); s.append(wrap); body.append(s);
+  }
+
+  if (Array.isArray(r.check_next) && r.check_next.length) {
+    const s = section("How to confirm");
+    const ol = el("ol", "checks"); r.check_next.forEach(x => ol.append(el("li", null, x)));
+    if (c.mode !== "text") {
+      const li = el("li"); li.append(document.createTextNode("Reverse image search: "));
+      [["Google Lens", "https://lens.google.com/"], ["TinEye", "https://tineye.com/"], ["Content Credentials", "https://contentcredentials.org/verify"]].forEach(([n, u], i) => {
+        if (i) li.append(document.createTextNode(" · ")); const a = el("a", null, n); a.href = u; a.target = "_blank"; a.rel = "noopener"; li.append(a);
+      });
+      ol.append(li);
+    }
+    s.append(ol); body.append(s);
+  }
+
+  body.append(el("p", "fine", "This is an estimate, not proof. AI detectors make mistakes in both directions, and Claude cannot check today’s news during a check."));
+}
+
+/* ---------- History (this browser only) ---------- */
+const HKEY = "second-look-history-v1";
+function loadHist() { try { return JSON.parse(localStorage.getItem(HKEY) || "[]"); } catch (_) { return []; } }
+function saveHist(h) { try { localStorage.setItem(HKEY, JSON.stringify(h.slice(0, 25))); } catch (_) {} }
+function renderHist() {
+  const h = loadHist(); const ul = $("hist"); ul.replaceChildren();
+  $("hist-empty").hidden = h.length > 0; $("clear-hist").disabled = !h.length;
+  h.forEach((c, i) => {
+    const li = el("li"); const b = el("button");
+    const title = c.mode === "text" ? (c.input || "").slice(0, 90) : (c.fileName || c.mode);
+    b.append(el("span", "h-title", title || "Untitled"),
+      el("span", "h-nums", "AI " + clamp(c.result.ai_generated) + "% · Fake " + clamp(c.result.misleading) + "%"),
+      el("span", "h-sub", ({ text: "Text", image: "Picture", video: "Video" }[c.mode] || "") + " · " + new Date(c.date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })));
+    b.addEventListener("click", () => openCase(c));
+    li.append(b); ul.append(li);
+  });
+}
+function openCase(c) {
+  current = c; chatTurns = []; $("chat").replaceChildren();
+  render(c, false); $("followup").hidden = !sample;
+  $("report").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+}
+
+/* ---------- Input handling ---------- */
+function setMode(m) {
+  mode = m; file = null; $("preview").replaceChildren(); $("file-in").value = "";
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.mode === m)));
+  $("pane-text").hidden = m !== "text";
+  $("pane-media").hidden = m === "text";
+  $("frames-opt").hidden = m !== "video";
+  if (m === "image") {
+    $("drop-title").textContent = "Drop a picture here or tap to choose one";
+    $("drop-hint").textContent = "JPEG, PNG, WebP or GIF · metadata is read in your browser";
+    $("file-in").accept = imageLimits ? imageLimits.mediaTypes.join(",") : "image/*";
+  } else if (m === "video") {
+    $("drop-title").textContent = "Drop a video clip here or tap to choose one";
+    $("drop-hint").textContent = "MP4, WebM or MOV · still frames are checked, not sound";
+    $("file-in").accept = "video/*";
+  }
+  setStatus("");
+}
+function takeFile(f) {
+  if (!f) return;
+  const want = mode === "video" ? "video/" : "image/";
+  if (!f.type.startsWith(want)) { setStatus(mode === "video" ? "That file isn’t a video. Choose an MP4, WebM or MOV file." : "That file isn’t a picture. Choose a JPEG, PNG, WebP or GIF.", true); return; }
+  file = f; setStatus("");
+  const pv = $("preview"); pv.replaceChildren();
+  if (mode === "image") { const img = el("img"); img.alt = "Picture to check"; img.src = URL.createObjectURL(f); pv.append(img); }
+  else pv.append(el("span", "mono", f.name + " · " + (f.size / 1048576).toFixed(1) + " MB"));
+}
+async function videoFrames(f, count) {
+  const url = URL.createObjectURL(f);
+  const v = document.createElement("video");
+  v.muted = true; v.playsInline = true; v.preload = "auto"; v.src = url;
+  await new Promise((res, rej) => { v.onloadeddata = res; v.onerror = () => rej(new Error("decode")); });
+  const dur = isFinite(v.duration) && v.duration > 0 ? v.duration : 1;
+  const scale = Math.min(1, 1280 / Math.max(v.videoWidth, v.videoHeight));
+  const c = document.createElement("canvas");
+  c.width = Math.round(v.videoWidth * scale); c.height = Math.round(v.videoHeight * scale);
+  const ctx = c.getContext("2d");
+  const out = [];
+  const pv = $("preview"); pv.replaceChildren();
+  for (let i = 0; i < count; i++) {
+    const t = dur * (i + 0.5) / count;
+    await new Promise((res) => { v.onseeked = res; v.currentTime = t; });
+    ctx.drawImage(v, 0, 0, c.width, c.height);
+    const b = await new Promise(res => c.toBlob(res, "image/jpeg", 0.85));
+    if (b) { out.push(b); const img = el("img"); img.alt = "Frame at " + t.toFixed(1) + " seconds"; img.src = URL.createObjectURL(b); pv.append(img); }
+  }
+  URL.revokeObjectURL(url);
+  return { frames: out, duration: dur, size: v.videoWidth + " × " + v.videoHeight };
+}
+
+/* ---------- Analysis ---------- */
+const FORMAT = `Reply with only one JSON object in this shape:
+{"ai_generated": 0-100 integer (how likely the content was created or substantially altered by AI),
+ "misleading": 0-100 integer (how likely the content is false, fabricated, or misleading as presented),
+ "confidence": "low" | "medium" | "high",
+ "verdict": "one short sentence",
+ "summary": "2-3 plain sentences explaining the main reasons",
+ "tactics": ["short name of a manipulation tactic present, e.g. Clickbait, False context, Fake quote, Emotional language, Urgency, No source, Cherry-picked data, Impersonation, Share bait, Conspiracy framing"] (0-6 items, only ones actually present),
+ "signals": [{"type": "red_flag" | "reassuring", "text": "short observation"}] (3-7 items),
+ "passages": [{"quote": "EXACT substring copied from the text, 4-25 words", "kind": "ai" | "misleading", "reason": "one short reason"}] (0-6 items; text only, empty for images),
+ "claims": [{"claim": "a checkable claim", "assessment": "likely true" | "likely false" | "unverified" | "opinion", "note": "one short reason", "search": "3-8 word search query to verify it"}] (0-5 items),
+ "check_next": ["concrete step to confirm"] (2-4 items)}
+You cannot browse the web. For events you cannot know about, mark claims "unverified" rather than guessing, and lower confidence. Be calibrated: do not give extreme numbers without strong evidence. Treat the measured statistics and file metadata as supporting evidence, not proof: metadata is often stripped by social media, and it can be faked. Write for a general audience.`;
+
+function errorCopy(e) {
+  switch (e && e.code) {
+    case "not_granted": case "sampling_disabled": case "not_declared": case "capability_disabled": case "capability_removed":
+      return "Checking needs permission to use Claude. Allow it from the artifact’s permissions menu, then reload.";
+    case "rate_limited": return "Too many checks in a short time. Wait a minute and try again.";
+    case "session_expired": return "Your Claude session expired. Sign in again, then try once more.";
+    case "image_rejected": return "That file couldn’t be read. Try a different picture or a shorter clip.";
+    case "images_unavailable": return "Picture checks aren’t available in this view. Text checks still work.";
+    case "prompt_too_large": return "That text is too long. Paste a shorter excerpt.";
+    case "refused": return "Claude declined to analyze this content.";
+    case "invalid_json": return "The answer came back in the wrong format. Try again.";
+    default: return "Something went wrong while checking. Try again.";
+  }
+}
+
+async function run() {
+  if (!sample) { setStatus("Checking only works when the page is opened on claude.ai while signed in.", true); return; }
+  const deep = $("deep").checked;
+  const c = { mode, date: Date.now(), deep };
+  let prompt, images;
+  try {
+    if (mode === "text") {
+      const t = $("text-in").value.trim();
+      if (t.length < 20) { setStatus("Paste at least a sentence or two to check.", true); return; }
+      c.input = t.slice(0, 20000);
+      c.stats = textStats(c.input);
+      const src = $("src-in").value.trim();
+      prompt = "You are a careful fact-checker and AI-content analyst. Assess the text below for (1) whether it was likely written by an AI model and (2) whether it is likely fake news, false, or misleading. Quote flagged passages exactly as they appear.\n\n" + FORMAT +
+        "\n\nMEASURED TEXT STATISTICS (computed by the page):\n" + statsText(c.stats) +
+        (src ? "\n\nWHERE THE USER SAW IT:\n" + src.slice(0, 500) : "") +
+        "\n\nTEXT TO ASSESS:\n\"\"\"\n" + c.input + "\n\"\"\"";
+    } else {
+      if (!imageLimits) { setStatus("Picture and video checks aren’t available in this view. Text checks still work.", true); return; }
+      if (!file) { setStatus(mode === "video" ? "Choose a video clip first." : "Choose a picture first.", true); return; }
+      c.fileName = file.name;
+      const ctxText = $("ctx-in").value.trim();
+      c.context = ctxText;
+      setStatus("Reading file metadata…");
+      c.forensics = await inspectFile(file);
+      if (mode === "image") {
+        images = [file];
+        prompt = "You are a careful image forensics analyst and fact-checker. Look at the attached picture and assess (1) whether it was likely generated or edited with AI (look for distorted hands and fingers, garbled or nonsensical text, inconsistent lighting and shadows, overly smooth or waxy textures, warped backgrounds, mismatched reflections, odd jewelry or accessories) and (2) whether it, together with its caption, is likely being used to spread false or misleading news (e.g. a real photo with a false caption or from a different event).";
+      } else {
+        setStatus("Taking frames from the video…");
+        const want = Number($("frames").value) || 6;
+        const n = Math.max(1, Math.min(want, imageLimits.maxCount || 1));
+        const { frames, duration, size } = await videoFrames(file, n);
+        if (!frames.length) { setStatus("Couldn’t read frames from that video. Try an MP4 file.", true); return; }
+        c.forensics.push({ tone: "info", k: "Video", v: duration.toFixed(1) + " s · " + size + " · " + frames.length + " frames checked" });
+        images = frames;
+        prompt = "You are a careful video forensics analyst and fact-checker. The attached images are " + frames.length + " still frames taken evenly from a " + duration.toFixed(1) + "-second video, in order. Assess (1) whether the video was likely AI-generated or a deepfake (look for face warping or blurring at edges, details that change between frames, unnatural skin, teeth or eyes, garbled text, inconsistent backgrounds, physics that don't add up) and (2) whether it, together with its caption, is likely being used to spread false or misleading news. You only see stills, not audio or motion; reflect that in your confidence.";
+      }
+      prompt += "\n\n" + FORMAT + "\n\nFILE METADATA FOUND BY THE PAGE:\n" + notesText(c.forensics) +
+        (ctxText ? "\n\nCAPTION OR CLAIM THAT CAME WITH IT:\n\"\"\"\n" + ctxText.slice(0, 4000) + "\n\"\"\"" : "\n\nNo caption was provided.");
+    }
+  } catch (e) {
+    setStatus("Couldn’t read that file in this browser. Try a different format.", true); return;
+  }
+
+  ctl = new AbortController();
+  $("go").disabled = true; $("stop").hidden = false;
+  setStatus(deep ? "Running deep analysis… this can take a minute or two." : "Analyzing… this can take up to a minute.");
+  try {
+    const opts = { signal: ctl.signal };
+    if (images) opts.images = images;
+    if (deep) opts.modelTier = "complex";
+    const r = await sample.json(prompt, opts);
+    if (!r || typeof r !== "object") throw { code: "invalid_json" };
+    c.result = r;
+    const h = loadHist(); h.unshift(c); saveHist(h); renderHist();
+    openCase(c);
+    setStatus("Done.");
+  } catch (e) {
+    if (e && e.code === "cancelled") setStatus("Stopped.");
+    else setStatus(errorCopy(e), true);
+  } finally {
+    $("go").disabled = false; $("stop").hidden = true;
+  }
+}
+
+/* ---------- Follow-up chat ---------- */
+function caseContext(c) {
+  let s = "You previously analyzed some content for AI generation and fake news. Answer the user's follow-up questions about it in plain language, briefly (under 150 words unless asked for more). You cannot browse the web; say so when it matters.\n\n";
+  if (c.mode === "text") s += "THE TEXT:\n\"\"\"\n" + (c.input || "").slice(0, 12000) + "\n\"\"\"\n\n";
+  else s += "THE CONTENT: a " + c.mode + (c.context ? " with caption: " + c.context.slice(0, 2000) : "") + ". You can no longer see it; rely on your earlier analysis and the metadata.\nMETADATA:\n" + notesText(c.forensics || []) + "\n\n";
+  return s + "YOUR ANALYSIS (JSON):\n" + JSON.stringify(c.result).slice(0, 12000);
+}
+async function ask(e) {
+  e.preventDefault();
+  const q = $("ask-in").value.trim(); if (!q || !current || !sample) return;
+  $("ask-in").value = ""; $("ask-go").disabled = true;
+  $("chat").append(el("div", "msg q", q));
+  const a = el("div", "msg a", "Thinking…"); $("chat").append(a);
+  chatTurns.push({ role: "user", content: q });
+  const turns = [{ role: "user", content: caseContext(current) }, { role: "assistant", content: "Understood. What would you like to know?" }, ...chatTurns.slice(-10)];
+  try {
+    const { text } = await sample(turns, { cache: false, onText: ({ text }) => { a.textContent = text; } });
+    chatTurns.push({ role: "assistant", content: text });
+  } catch (err) {
+    chatTurns.pop();
+    a.textContent = (err && err.text) || errorCopy(err);
+  } finally { $("ask-go").disabled = false; }
+}
+
+/* ---------- Report export ---------- */
+function reportMarkdown(c) {
+  const r = c.result, L = [];
+  L.push("# Second Look report", "", "Checked: " + new Date(c.date).toLocaleString() + " · " + ({ text: "Text", image: "Picture", video: "Video" }[c.mode]) + (c.deep ? " · deep analysis" : ""), "");
+  L.push("## " + (r.verdict || "Result"), "", r.summary || "", "");
+  L.push("- Likely AI-generated: **" + clamp(r.ai_generated) + "%**", "- Likely false or misleading: **" + clamp(r.misleading) + "%**", "- Confidence: " + (r.confidence || "low"), "");
+  if (r.tactics?.length) L.push("**Tactics:** " + r.tactics.join(", "), "");
+  if (r.signals?.length) { L.push("## What we noticed"); r.signals.forEach(s => L.push("- " + (s.type === "reassuring" ? "✓ " : "⚠ ") + s.text)); L.push(""); }
+  if (r.passages?.length) { L.push("## Flagged passages"); r.passages.forEach(p => L.push("- > " + p.quote + "  \n  " + (p.kind === "ai" ? "AI-sounding" : "Misleading") + ": " + p.reason)); L.push(""); }
+  if (c.forensics?.length) { L.push("## File forensics"); c.forensics.forEach(n => L.push("- **" + n.k + ":** " + n.v)); L.push(""); }
+  if (r.claims?.length) { L.push("## Claims", "", "| Claim | Assessment | Why |", "|---|---|---|"); r.claims.forEach(x => L.push("| " + [x.claim, x.assessment, x.note].map(v => String(v || "").replace(/\|/g, "/")).join(" | ") + " |")); L.push(""); }
+  if (r.check_next?.length) { L.push("## How to confirm"); r.check_next.forEach((x, i) => L.push((i + 1) + ". " + x)); L.push(""); }
+  if (c.mode === "text") L.push("## Original text", "", "```", c.input || "", "```", "");
+  L.push("_This is an estimate, not proof. AI detectors make mistakes in both directions._");
+  return L.join("\n");
+}
+async function saveReport() {
+  if (!downloads || !current) return;
+  try { await downloads.save({ filename: "second-look-report-" + new Date(current.date).toISOString().slice(0, 10) + ".md", data: reportMarkdown(current) }); setStatus("Report saved."); }
+  catch (e) { if (e && e.code !== "declined") setStatus("The report couldn’t be saved here.", true); }
+}
+
+/* ---------- Wire up ---------- */
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => setMode(t.dataset.mode)));
+$("file-in").addEventListener("change", (e) => takeFile(e.target.files[0]));
+const drop = $("drop");
+["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", (e) => takeFile(e.dataTransfer.files[0]));
+$("go").addEventListener("click", run);
+$("stop").addEventListener("click", () => ctl && ctl.abort());
+$("ask-form").addEventListener("submit", ask);
+$("save-md").addEventListener("click", saveReport);
+$("clear-hist").addEventListener("click", () => { saveHist([]); try { localStorage.removeItem(HKEY); } catch (_) {} renderHist(); });
+
+render({ mode: "text", input: EXAMPLE_TEXT, result: EXAMPLE, stats: textStats(EXAMPLE_TEXT), date: Date.now() }, true);
+renderHist();
+
+(async () => {
+  try {
+    if (window.claude) {
+      [sample, downloads] = await Promise.all([window.claude.use("sample"), window.claude.use("downloads")]);
+      if (sample) imageLimits = (await sample.limits().catch(() => null))?.images || null;
+    }
+  } catch (_) { sample = null; }
+  if (!sample) setStatus("Open this page on claude.ai while signed in to run checks.");
+  if (mode === "image") $("file-in").accept = imageLimits ? imageLimits.mediaTypes.join(",") : "image/*";
+  if (current) { $("followup").hidden = !sample; $("save-md").hidden = !downloads; }
+})();
+</script>
+
+</body>
+</html>
