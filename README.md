@@ -2,6 +2,8 @@
 
 A fake news and AI-content checker. Paste text, or upload a picture or video clip, and get an estimate of how likely it is to be **AI-generated** and how likely it is to be **false or misleading**, with the evidence behind each number.
 
+**Live preview:** https://ehsamjo12.github.io/second-look/ (layout and example only; checks run when the page is opened as a claude.ai artifact)
+
 > **About this project:** This is a fun side project, not a serious or research-grade tool. I built it entirely by prompt engineering with Claude Code, to test my prompts and see what I could achieve with such a powerful AI tool. Don't rely on it to decide what's true.
 
 ## Features
