@@ -26,3 +26,10 @@ The analysis uses Claude through the claude.ai Artifact runtime (`window.claude.
 ## Limits
 
 This is an estimate, not proof. AI detectors make mistakes in both directions. Claude doesn't search the web during a check, so it can't confirm breaking news. Video sound and motion aren't analyzed, and image metadata is often stripped by social media.
+
+## Credits
+
+- Earth imagery: NASA Blue Marble (public domain).
+- Country borders: Natural Earth (public domain), via the `world-atlas` package.
+- Globe rendering: [d3-geo](https://d3js.org/) and [topojson-client](https://github.com/topojson/topojson-client).
+- Newspaper names in the background are invented and don't refer to real publications.
