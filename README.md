@@ -2,7 +2,7 @@
 
 A fake news and AI-content checker. Paste text, or upload a picture or video clip, and get an estimate of how likely it is to be **AI-generated** and how likely it is to be **false or misleading**, with the evidence behind each number.
 
-**Live preview:** https://ehsamjo12.github.io/second-look/ (layout and example only; checks run when the page is opened as a claude.ai artifact)
+**Try it:** https://ehsamjo12.github.io/second-look/ (connect your own Claude API key to run checks)
 
 > **About this project:** This is a fun side project, not a serious or research-grade tool. I built it entirely by prompt engineering with Claude Code, to test my prompts and see what I could achieve with such a powerful AI tool. Don't rely on it to decide what's true.
 
@@ -36,7 +36,14 @@ Feel free to copy, fork and remix this project. Everything lives in a single `in
 
 ## How it runs
 
-The analysis uses Claude through the claude.ai Artifact runtime (`window.claude.use("sample")`), so it runs on the signed-in viewer's own Claude account at no cost to the site owner. Opened anywhere else (for example GitHub Pages), the page shows the layout and an example result, but checks are disabled.
+The page works in two modes, from the same `index.html`:
+
+1. **On its own (GitHub Pages or any static host).** Visitors connect their own Claude API key from the [Anthropic Console](https://console.anthropic.com/settings/keys). The page calls the Claude API straight from the browser using the official [Anthropic TypeScript SDK](https://github.com/anthropics/anthropic-sdk-typescript) (`dangerouslyAllowBrowser: true`). The key stays in that visitor's browser and is sent only to `api.anthropic.com`. Each check is billed to the visitor's own account (usually a few cents), so hosting costs nothing. Verified checks used for learning are saved in the visitor's browser.
+2. **As a claude.ai artifact.** The analysis runs through the artifact runtime on the signed-in viewer's own Claude account, and verified checks are shared between everyone who can open the artifact.
+
+No server and no build step: open `index.html` in a browser, or fork the repo and turn on GitHub Pages.
+
+**A note on API keys in the browser:** anyone who connects a key should use one with a spending limit and avoid shared computers. If you want a site where visitors don't need a key, put a small serverless proxy (for example a Cloudflare Worker) in front of the API that holds your key and rate-limits requests. That moves the cost to you.
 
 ## Limits
 
