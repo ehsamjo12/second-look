@@ -227,7 +227,6 @@ body::before {
     radial-gradient(40% 34% at 30% 78%, rgba(0,0,0,0.05), transparent 70%),
     radial-gradient(30% 26% at 80% 88%, rgba(0,0,0,0.06), transparent 70%),
     #fbfbfd;
-  animation: drift 40s ease-in-out infinite alternate;
 }
 @keyframes drift { to { transform: translate3d(2%, -2%, 0) scale(1.04); } }
 
@@ -298,8 +297,12 @@ button.primary:active { transform: scale(0.98); }
   body::before, .report-body > * { animation: none; }
   button.primary, .tab { transition: none; }
 }
+#bg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+header h1, header .lede { text-shadow: 0 0 18px #fbfbfd, 0 0 6px #fbfbfd, 0 0 2px #fbfbfd; }
+.status, .tag, .extras summary { text-shadow: 0 0 8px #fbfbfd, 0 0 3px #fbfbfd; }
 </style>
 
+<canvas id="bg" aria-hidden="true"></canvas>
 <main class="wrap">
   <header>
     <div class="label">Fake news &amp; AI content check</div>
@@ -1038,6 +1041,180 @@ renderHist();
   if (!sample) setStatus("Open this page on claude.ai while signed in to run checks.");
   if (mode === "image") $("file-in").accept = imageLimits ? imageLimits.mediaTypes.join(",") : "image/*";
   if (current) { $("followup").hidden = !sample; $("save-md").hidden = !downloads; }
+})();
+
+/* ---------- Background: turning news globe and drifting clippings ---------- */
+(function () {
+  const cv = document.getElementById("bg");
+  if (!cv || !cv.getContext) return;
+  const ctx = cv.getContext("2d");
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let W = 0, H = 0, DPR = 1;
+
+  // Coarse world map: [row, firstCol, lastCol] on a 10° grid. Row 0 = 80–90°N, col 0 = 180–170°W.
+  const LAND = [
+    [0,12,15],
+    [1,6,10],[1,11,15],[1,19,19],[1,23,31],
+    [2,1,11],[2,12,14],[2,15,15],[2,19,35],
+    [3,2,11],[3,17,17],[3,18,33],
+    [4,5,11],[4,17,32],
+    [5,5,10],[5,17,18],[5,20,21],[5,22,31],[5,32,32],
+    [6,6,9],[6,16,23],[6,24,30],
+    [7,8,9],[7,16,22],[7,25,26],[7,27,28],[7,30,30],
+    [8,10,12],[8,17,22],[8,27,29],
+    [9,10,13],[9,19,21],[9,28,32],
+    [10,10,13],[10,19,21],[10,22,22],[10,30,32],
+    [11,11,13],[11,19,21],[11,29,33],
+    [12,11,12],[12,19,20],[12,29,32],
+    [13,11,12],[13,32,32],[13,34,34],
+    [14,11,12],
+    [16,0,35],[17,0,35],[15,4,8],[15,14,30]
+  ];
+  const grid = Array.from({ length: 18 }, () => new Uint8Array(36));
+  LAND.forEach(([r, a, b]) => { for (let c = a; c <= b; c++) grid[r][c] = 1; });
+  const isLand = (lat, lon) => {
+    const r = Math.min(17, Math.max(0, Math.floor((90 - lat) / 10)));
+    const c = Math.min(35, Math.max(0, Math.floor((lon + 180) / 10)));
+    return grid[r][c] === 1;
+  };
+  const dots = [];
+  for (let lat = -78; lat <= 84; lat += 2.6) {
+    const step = 2.6 / Math.max(0.2, Math.cos(lat * Math.PI / 180));
+    for (let lon = -180; lon < 180; lon += step) {
+      // jitter the cell edges a little so continents read less blocky
+      const jl = lat + Math.sin(lon * 0.21) * 2.5, jn = lon + Math.cos(lat * 0.27) * 3;
+      if (isLand(jl, jn)) dots.push([lat * Math.PI / 180, lon * Math.PI / 180]);
+    }
+  }
+
+  // Clippings
+  const HEAD = ["BREAKING", "EXCLUSIVE", "WORLD", "REPORT", "NEWS", "UPDATE"];
+  const clips = [];
+  function makeClip(initial) {
+    const w = 70 + Math.random() * 70;
+    return {
+      x: Math.random() * W, y: initial ? Math.random() * H : H + 120 + Math.random() * 200,
+      w, h: w * (1.15 + Math.random() * 0.35),
+      rot: (Math.random() - 0.5) * 0.6, vr: (Math.random() - 0.5) * 0.06,
+      vy: 8 + Math.random() * 10, sway: Math.random() * Math.PI * 2,
+      head: HEAD[Math.floor(Math.random() * HEAD.length)],
+      photo: Math.random() < 0.6, stamp: Math.random() < 0.35, depth: 0.45 + Math.random() * 0.55
+    };
+  }
+  function drawClip(c, t) {
+    ctx.save();
+    ctx.translate(c.x + Math.sin(t * 0.3 + c.sway) * 14, c.y);
+    ctx.rotate(c.rot);
+    ctx.globalAlpha = 0.45 * c.depth;
+    const w = c.w, h = c.h, x = -w / 2, y = -h / 2;
+    ctx.fillStyle = "#ffffff"; ctx.strokeStyle = "rgba(0,0,0,0.10)"; ctx.lineWidth = 1;
+    ctx.shadowColor = "rgba(0,0,0,0.08)"; ctx.shadowBlur = 12; ctx.shadowOffsetY = 4;
+    ctx.beginPath(); ctx.rect(x, y, w, h); ctx.fill(); ctx.shadowColor = "transparent"; ctx.stroke();
+    const p = w * 0.09;
+    ctx.fillStyle = "#3a3a3c"; ctx.font = "700 " + Math.round(w * 0.11) + "px -apple-system, Helvetica, Arial, sans-serif";
+    ctx.textBaseline = "top"; ctx.fillText(c.head, x + p, y + p, w - 2 * p);
+    ctx.fillStyle = "rgba(0,0,0,0.12)"; ctx.fillRect(x + p, y + p + w * 0.15, w - 2 * p, 1);
+    let yy = y + p + w * 0.2;
+    ctx.fillStyle = "rgba(0,0,0,0.55)"; ctx.fillRect(x + p, yy, (w - 2 * p) * 0.9, w * 0.05); yy += w * 0.08;
+    ctx.fillRect(x + p, yy, (w - 2 * p) * 0.6, w * 0.05); yy += w * 0.1;
+    if (c.photo) { ctx.fillStyle = "rgba(0,0,0,0.10)"; ctx.fillRect(x + p, yy, w - 2 * p, h * 0.28); yy += h * 0.28 + w * 0.06; }
+    ctx.fillStyle = "rgba(0,0,0,0.13)";
+    const colW = (w - 2 * p - w * 0.06) / 2;
+    for (let col = 0; col < 2; col++) for (let ly = yy; ly < y + h - p; ly += w * 0.055) ctx.fillRect(x + p + col * (colW + w * 0.06), ly, colW * (0.75 + ((ly * 7 + col) % 5) / 20), w * 0.022);
+    if (c.stamp) {
+      ctx.globalAlpha = 0.7 * c.depth;
+      ctx.translate(x + w * 0.72, y + h * 0.58); ctx.rotate(-0.35);
+      ctx.strokeStyle = "rgba(29,29,31,0.55)"; ctx.lineWidth = Math.max(1.5, w * 0.025);
+      ctx.beginPath(); ctx.arc(0, 0, w * 0.17, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = "rgba(29,29,31,0.6)"; ctx.font = "700 " + Math.round(w * 0.2) + "px -apple-system, Helvetica, Arial, sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("?", 0, 1);
+    }
+    ctx.restore();
+  }
+
+  const pings = [];
+  let lastPing = 0;
+  const TILT = 0.38;
+  function project(lat, lon, rot) {
+    const l = lon + rot;
+    const x = Math.cos(lat) * Math.sin(l), y0 = Math.sin(lat), z0 = Math.cos(lat) * Math.cos(l);
+    return [x, y0 * Math.cos(TILT) - z0 * Math.sin(TILT), y0 * Math.sin(TILT) + z0 * Math.cos(TILT)];
+  }
+  function drawGlobe(t) {
+    const R = Math.min(W, H) * (W < 600 ? 0.46 : 0.36);
+    const cx = W * 0.5, cy = Math.min(H * 0.5, R + 140);
+    const rot = t * 0.06;
+    // sphere body
+    const g = ctx.createRadialGradient(cx - R * 0.35, cy - R * 0.4, R * 0.1, cx, cy, R);
+    g.addColorStop(0, "rgba(255,255,255,0.6)"); g.addColorStop(1, "rgba(0,0,0,0.025)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "rgba(0,0,0,0.05)"; ctx.lineWidth = 1; ctx.stroke();
+    // graticule
+    ctx.strokeStyle = "rgba(0,0,0,0.035)";
+    for (let m = 0; m < 12; m++) {
+      ctx.beginPath(); let pen = false;
+      for (let la = -90; la <= 90; la += 6) {
+        const [x, y, z] = project(la * Math.PI / 180, m * Math.PI / 6, rot);
+        if (z > 0) { pen ? ctx.lineTo(cx + x * R, cy - y * R) : ctx.moveTo(cx + x * R, cy - y * R); pen = true; } else pen = false;
+      }
+      ctx.stroke();
+    }
+    // land dots
+    const ds = Math.max(1.1, R / 170);
+    for (let i = 0; i < dots.length; i++) {
+      const [x, y, z] = project(dots[i][0], dots[i][1], rot);
+      if (z <= 0.02) continue;
+      ctx.fillStyle = "rgba(29,29,31," + (0.05 + z * 0.2).toFixed(3) + ")";
+      ctx.fillRect(cx + x * R - ds / 2, cy - y * R - ds / 2, ds, ds);
+    }
+    // news pings
+    if (!still && t - lastPing > 1.1 && dots.length) {
+      lastPing = t;
+      for (let k = 0; k < 8; k++) {
+        const d = dots[Math.floor(Math.random() * dots.length)];
+        if (project(d[0], d[1], rot)[2] > 0.35) { pings.push({ d, born: t }); break; }
+      }
+    }
+    for (let i = pings.length - 1; i >= 0; i--) {
+      const p = pings[i], age = t - p.born;
+      if (age > 3) { pings.splice(i, 1); continue; }
+      const [x, y, z] = project(p.d[0], p.d[1], rot);
+      if (z <= 0) continue;
+      const px = cx + x * R, py = cy - y * R, k = age / 3;
+      ctx.strokeStyle = "rgba(29,29,31," + ((1 - k) * 0.5 * z).toFixed(3) + ")"; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(px, py, 3 + k * R * 0.12, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = "rgba(29,29,31," + ((1 - k) * 0.8 * z).toFixed(3) + ")";
+      ctx.beginPath(); ctx.arc(px, py, 2.4, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    const n = W < 600 ? 6 : 11;
+    while (clips.length < n) clips.push(makeClip(true));
+    clips.length = n;
+  }
+  resize();
+  window.addEventListener("resize", resize);
+
+  let last = performance.now(), t = 0, raf = 0;
+  function frame(now) {
+    const dt = Math.min(0.1, (now - last) / 1000); last = now; t += dt;
+    ctx.clearRect(0, 0, W, H);
+    clips.forEach(c => { if (c.depth < 0.7) { c.y -= c.vy * dt; c.rot += c.vr * dt; if (c.y < -c.h) Object.assign(c, makeClip(false)); drawClip(c, t); } });
+    drawGlobe(t);
+    clips.forEach(c => { if (c.depth >= 0.7) { c.y -= c.vy * dt; c.rot += c.vr * dt; if (c.y < -c.h) Object.assign(c, makeClip(false)); drawClip(c, t); } });
+    if (!still) raf = requestAnimationFrame(frame);
+  }
+  if (still) frame(performance.now());
+  else raf = requestAnimationFrame(frame);
+  document.addEventListener("visibilitychange", () => {
+    if (still) return;
+    if (document.hidden) cancelAnimationFrame(raf); else { last = performance.now(); raf = requestAnimationFrame(frame); }
+  });
 })();
 </script>
 
