@@ -11,6 +11,9 @@ A fake news and AI-content checker. Paste text, or upload a picture or video cli
 - **Arguments, not just labels:** each reason shows what was found in the content, why it matters, and how strong a sign it is, plus points on the other side.
 - **Listen to the result:** a Listen button reads the verdict and every argument aloud, with a floating player (pause, skip section, speed) that highlights and scrolls to the part being read.
 - **Comfortable editorial reading:** a news serif for everything you read, generous spacing, numbered arguments and a reading progress line.
+- **Learns from verified checks:** after a check, people can say whether it turned out to be fake, real or AI-made. Future checks are shown the most similar verified cases plus a track record of past mistakes, so estimates get better over time. (The AI model itself isn't retrained; the page feeds it what it has learned.)
+- **Accessible:** skip link, proper headings, keyboard-navigable tabs, screen-reader announcements when a result is ready, live captions for the audio, a natural-voice picker, a pause button for background motion, and a high-contrast mode.
+- **Living background:** a textured 3D globe with news pings, plus drifting newspaper clippings, viral phone posts, forwarded chats, warning signs and "UNVERIFIED" tags that show how chaotic the information world can be.
 - **A calm layout:** verdict and reasons first; extra details are folded away until you open them.
 - **Flagged passages:** the exact sentences that sound AI-written or misleading are highlighted in the original text.
 - **Manipulation tactics:** clickbait, false context, fake quotes, urgency, share bait and similar.
@@ -20,6 +23,14 @@ A fake news and AI-content checker. Paste text, or upload a picture or video cli
 - **Deep analysis mode** for a slower, more thorough check.
 - **Follow-up questions** about any result.
 - **Downloadable Markdown report** and a history of past checks saved in your browser.
+
+## Use this idea
+
+Feel free to copy, fork and remix this project. Everything lives in a single `index.html` file: the layout, styles, prompts and background animation. Good places to start:
+
+- **The prompts:** search for `FORMAT` and `lessonsFor` in `index.html` to see how the AI is asked to argue its verdict and learn from past checks.
+- **The look:** the glass style and typography are CSS variables at the top of the file.
+- **The background:** search for `Background:` to find the globe and floating objects.
 
 ## How it runs
 
