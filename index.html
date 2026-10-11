@@ -6,7 +6,7 @@
 </head>
 <body>
 <title>Second Look</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=UnifrakturMaguntia&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Playfair+Display:wght@700;900&family=UnifrakturMaguntia&display=swap">
 <style>
 /* Layout: one calm centred column on pure white; grey cards, black ink, no accent colour. Deliberately single (light) theme. */
 :root {
@@ -301,9 +301,70 @@ button.primary:active { transform: scale(0.98); }
 #bg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
 header h1, header .lede { text-shadow: 0 0 18px #fbfbfd, 0 0 6px #fbfbfd, 0 0 2px #fbfbfd; }
 .status, .tag, .extras summary { text-shadow: 0 0 8px #fbfbfd, 0 0 3px #fbfbfd; }
+
+/* ---------- Editorial reading layer: news serif for what you read, system sans for what you press ---------- */
+:root { --font-read: "Newsreader", "Iowan Old Style", Georgia, "Times New Roman", serif; --read-ink: #2c2c2e; }
+.lede { font-family: var(--font-read); font-size: 1.35rem; line-height: 1.5; letter-spacing: 0; color: #48484a; }
+.report-body { gap: 64px; }
+.section { gap: 22px; }
+.section > .label, .take-top > .label { font-family: var(--font); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); }
+.take { padding: 48px 36px 36px; gap: 30px; }
+.take-top { gap: 14px; }
+.verdict { font-family: var(--font-read); font-weight: 600; font-size: 3rem; line-height: 1.05; letter-spacing: -0.02em; }
+.bottom-line { font-family: var(--font-read); font-size: 1.32rem; line-height: 1.55; color: var(--read-ink); max-width: 34em; letter-spacing: 0; }
+.listen-row { display: flex; gap: 14px; align-items: center; justify-content: center; flex-wrap: wrap; font-size: 0.85rem; color: var(--muted); }
+.listen-btn { display: inline-flex; align-items: center; gap: 8px; border: 0; cursor: pointer; padding: 8px 18px 8px 10px; border-radius: 980px; font-size: 0.92rem; font-weight: 500; color: var(--fg); background: rgba(255,255,255,0.85); box-shadow: 0 1px 0 #fff inset, 0 2px 10px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.08); }
+.listen-btn .ic { width: 26px; height: 26px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; }
+.listen-btn .ic svg { width: 11px; height: 11px; }
+.listen-btn .pause-i, .listen-btn.is-playing .play-i { display: none; }
+.listen-btn.is-playing .pause-i { display: block; }
+.args { gap: 24px; }
+.arg { padding: 30px 32px; gap: 16px; }
+.arg-head { align-items: flex-start; }
+.arg-num { font-family: var(--font-read); font-size: 2.6rem; line-height: 0.9; font-weight: 400; color: var(--faint); min-width: 1.1em; }
+.arg-point { font-family: var(--font-read); font-weight: 600; font-size: 1.5rem; line-height: 1.22; letter-spacing: -0.01em; }
+.arg-tags { padding-top: 6px; }
+.evidence { font-family: var(--font-read); font-style: italic; font-size: 1.22rem; line-height: 1.5; color: var(--fg); gap: 6px; }
+.reason { font-family: var(--font-read); font-size: 1.16rem; line-height: 1.7; color: var(--read-ink); max-width: 36em; gap: 6px; }
+.evidence-label, .reason b { font-family: var(--font); font-style: normal; text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.7rem; }
+.counter { font-family: var(--font-read); font-size: 1.14rem; line-height: 1.65; color: var(--read-ink); gap: 16px; }
+.counter b { font-weight: 600; }
+.msg.a { font-family: var(--font-read); font-size: 1.08rem; line-height: 1.6; }
+.about p { font-family: var(--font-read); font-size: 1.05rem; line-height: 1.65; }
+.fine { font-family: var(--font-read); font-style: italic; font-size: 0.95rem; }
+
+/* What is being read aloud */
+.reading { box-shadow: var(--glass-shadow), 0 0 0 2px var(--ink) !important; transition: box-shadow 0.3s ease; }
+.scores.reading, .counter.reading, .fine.reading { box-shadow: none !important; outline: 2px solid var(--ink); outline-offset: 10px; border-radius: 12px; }
+
+/* Floating audio player */
+.player { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 20; width: min(560px, calc(100% - 32px)); display: grid; grid-template-columns: auto auto auto 1fr auto auto; align-items: center; gap: 6px 10px; padding: 10px 14px; border-radius: 22px; background: rgba(255,255,255,0.72); -webkit-backdrop-filter: blur(30px) saturate(180%); backdrop-filter: blur(30px) saturate(180%); border: 1px solid rgba(255,255,255,0.9); box-shadow: 0 1px 0 #fff inset, 0 12px 40px rgba(0,0,0,0.16), 0 0 0 0.5px rgba(0,0,0,0.06); }
+.player button { border: 0; background: none; cursor: pointer; color: var(--fg); width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-size: 0.85rem; font-weight: 600; }
+.player button:hover { background: rgba(0,0,0,0.05); }
+.player svg { width: 16px; height: 16px; }
+#pl-play { background: var(--ink); color: #fff; width: 40px; height: 40px; }
+#pl-play .pause-i, #pl-play.is-playing .play-i { display: none; }
+#pl-play.is-playing .pause-i { display: block; }
+.pl-mid { min-width: 0; display: grid; gap: 6px; }
+#pl-label { font-size: 0.82rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-track { height: 3px; background: rgba(0,0,0,0.1); border-radius: 2px; overflow: hidden; }
+#pl-bar { height: 100%; width: 0; background: var(--ink); transition: width 0.3s ease; }
+#pl-rate { width: auto; padding: 0 8px; border-radius: 10px; font-variant-numeric: tabular-nums; }
+#read-progress { position: fixed; top: 0; left: 0; right: 0; height: 2px; background: var(--ink); transform-origin: 0 50%; transform: scaleX(0); z-index: 30; }
+@media (max-width: 480px) {
+  .verdict { font-size: 2.3rem; }
+  .bottom-line { font-size: 1.18rem; }
+  .take { padding: 36px 20px 28px; }
+  .arg { padding: 24px 20px; }
+  .arg-point { font-size: 1.3rem; }
+  .arg-num { font-size: 2rem; }
+  .player { grid-template-columns: auto auto auto 1fr auto; } #pl-close { display: none; }
+}
+[hidden] { display: none !important; }
 </style>
 
 <canvas id="bg" aria-hidden="true"></canvas>
+<div id="read-progress" aria-hidden="true"></div>
 <main class="wrap">
   <header>
     <div class="label">Fake news &amp; AI content check</div>
@@ -398,6 +459,14 @@ header h1, header .lede { text-shadow: 0 0 18px #fbfbfd, 0 0 6px #fbfbfd, 0 0 2p
     <p>No detector is fully reliable. Treat the percentages as a starting point for your own judgement, not as proof.</p>
   </details>
 </main>
+<div class="player" id="player" role="region" aria-label="Audio player" hidden>
+  <button id="pl-back" aria-label="Previous section"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.5h2v11H3zM14 2.5v11L6 8z" fill="currentColor"/></svg></button>
+  <button id="pl-play" aria-label="Play"><svg class="play-i" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg><svg class="pause-i" viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="2.5" width="3" height="11" rx="1" fill="currentColor"/><rect x="9.5" y="2.5" width="3" height="11" rx="1" fill="currentColor"/></svg></button>
+  <button id="pl-next" aria-label="Next section"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11 2.5h2v11h-2zM2 2.5v11L10 8z" fill="currentColor"/></svg></button>
+  <div class="pl-mid"><span id="pl-label"></span><div class="pl-track"><div id="pl-bar"></div></div></div>
+  <button id="pl-rate" aria-label="Playback speed">1×</button>
+  <button id="pl-close" aria-label="Close player"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
@@ -672,7 +741,11 @@ function render(c, isExample) {
   top.append(el("span", "label", "Our take"), el("p", "verdict", r.verdict || "Result"));
   const bl = r.bottom_line || r.summary;
   if (bl) top.append(el("p", "bottom-line", bl));
+  const listenRow = el("div", "listen-row");
+  top.append(listenRow);
   take.append(top);
+  const narr = [];
+  narr.push({ el: take, label: "Our take", text: "Our take: " + (r.verdict || "") + ". " + (bl || "") });
   const scores = el("div", "scores");
   scores.append(meter("Likely fake or misleading", mis, "content or framing"), meter("Likely AI-generated", ai, "made or altered by AI"));
   take.append(scores);
@@ -683,17 +756,20 @@ function render(c, isExample) {
   cw.append(dots, el("span", "band", conf.charAt(0).toUpperCase() + conf.slice(1) + (c.deep ? " · deep analysis" : "")));
   take.append(cw);
   body.append(take);
+  narr.push({ el: scores, label: "The scores", text: "We rate this " + mis + " percent likely to be fake or misleading, and " + ai + " percent likely to be AI-generated. Our confidence is " + conf + "." });
 
   /* 2. Why we think so */
   const args = argsOf(r);
   if (args.length) {
     const s = section("Why we think so");
     const ol = el("ol", "args");
-    args.forEach(a => {
+    const ORD = ["First", "Second", "Third", "Fourth", "Fifth"];
+    args.forEach((a, ai_) => {
       const w = ["strong", "moderate", "weak"].includes(a.weight) ? a.weight : "moderate";
       const li = el("li", "arg " + w);
       const h = el("div", "arg-head");
-      h.append(el("span", "arg-point", a.point || ""));
+      h.append(el("span", "arg-num", String(ai_ + 1)), el("span", "arg-point", a.point || ""));
+      narr.push({ el: li, label: "Why we think so · " + (ai_ + 1) + " of " + args.length, text: (ai_ === 0 ? "Here's why. " : "") + (ORD[ai_] || "Next") + ": " + (a.point || "") + ". " + (a.evidence ? "What we saw: " + a.evidence.replace(/[“”"]/g, "") + ". " : "") + (a.reasoning || "") });
       const tags = el("span", "arg-tags");
       tags.append(el("span", "wt " + w, w === "strong" ? "Strong sign" : w === "weak" ? "Weak sign" : "Moderate sign"));
       tags.append(el("span", "about-tag", a.about === "ai" ? "AI clue" : a.tactic || "Fake clue"));
@@ -717,6 +793,7 @@ function render(c, isExample) {
       li.append(el("span", "mark green", "✓"), t); ul.append(li);
     });
     s.append(ul); body.append(s);
+    narr.push({ el: ul, label: "On the other hand", text: "On the other hand. " + counters.map(cp => (cp.point || "") + ". " + (cp.reasoning || "")).join(" ") });
   }
 
   /* 4. Details, folded away */
@@ -790,7 +867,19 @@ function render(c, isExample) {
   }
 
   if (folds.childElementCount) body.append(folds);
-  body.append(el("p", "fine", "This is an estimate, not proof. AI detectors make mistakes in both directions, and Claude cannot check today’s news during a check."));
+  const fineEl = el("p", "fine", "This is an estimate, not proof. AI detectors make mistakes in both directions, and Claude cannot check today’s news during a check.");
+  body.append(fineEl);
+  narr.push({ el: fineEl, label: "Before you share", text: "Remember, this is an estimate, not proof. Check it with a trusted source before you share it." });
+  const mins = setNarration(narr);
+  const words = narr.reduce((n, it) => n + String(it.text).split(/\s+/).length, 0);
+  listenRow.append(el("span", null, Math.max(1, Math.round(words / 230)) + " min read"));
+  if (TTS) {
+    const b = el("button", "listen-btn"); b.type = "button";
+    const ic = el("span", "ic"); ic.innerHTML = PLAY_ICON; b.append(ic, el("span", "lb-text", "Listen"));
+    b.addEventListener("click", () => player.playing ? pauseListening() : playListening());
+    listenRow.prepend(b);
+    listenRow.append(el("span", null, "· " + mins + " min listen"));
+  }
 }
 
 /* ---------- History (this browser only) ---------- */
@@ -1017,6 +1106,105 @@ async function saveReport() {
   try { await downloads.save({ filename: "second-look-report-" + new Date(current.date).toISOString().slice(0, 10) + ".md", data: reportMarkdown(current) }); setStatus("Report saved."); }
   catch (e) { if (e && e.code !== "declined") setStatus("The report couldn’t be saved here.", true); }
 }
+
+const PLAY_ICON = '<svg class="play-i" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg><svg class="pause-i" viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="2.5" width="3" height="11" rx="1" fill="currentColor"/><rect x="9.5" y="2.5" width="3" height="11" rx="1" fill="currentColor"/></svg>';
+/* ---------- Listen: read the result aloud ---------- */
+const TTS = ("speechSynthesis" in window) && typeof SpeechSynthesisUtterance !== "undefined";
+const player = { queue: [], idx: 0, playing: false, rate: 1, token: 0, voice: null, lastEl: null };
+function pickVoice() {
+  if (!TTS) return null;
+  const vs = speechSynthesis.getVoices().filter(v => /^en(-|_|$)/i.test(v.lang));
+  const pref = ["Samantha", "Ava", "Allison", "Serena", "Daniel", "Karen", "Google UK English Female", "Google US English", "Microsoft Aria", "Microsoft Jenny"];
+  for (const p of pref) { const v = vs.find(v => v.name.includes(p)); if (v) return v; }
+  return vs.find(v => v.localService) || vs[0] || null;
+}
+if (TTS) { try { speechSynthesis.onvoiceschanged = () => { player.voice = pickVoice(); }; player.voice = pickVoice(); } catch (_) {} }
+function sentences(t) { return (String(t).match(/[^.!?]+[.!?]+["”’)]*\s*|[^.!?]+$/g) || []).map(s => s.trim()).filter(Boolean); }
+function setNarration(items) {
+  stopListening();
+  player.queue = [];
+  items.forEach(it => sentences(it.text).forEach(s => player.queue.push({ text: s, el: it.el, label: it.label })));
+  const words = player.queue.reduce((n, q) => n + q.text.split(/\s+/).length, 0);
+  return Math.max(1, Math.round(words / 160));
+}
+function speakAt(i) {
+  if (!TTS) return;
+  const my = ++player.token;
+  try { speechSynthesis.cancel(); } catch (_) {}
+  if (i >= player.queue.length) { finishListening(); return; }
+  player.idx = Math.max(0, i);
+  const q = player.queue[player.idx];
+  const u = new SpeechSynthesisUtterance(q.text);
+  if (player.voice) u.voice = player.voice;
+  u.rate = player.rate; u.pitch = 1;
+  u.onend = () => { if (my === player.token && player.playing) speakAt(player.idx + 1); };
+  u.onerror = (e) => { if (my === player.token && player.playing && e.error !== "interrupted" && e.error !== "canceled") speakAt(player.idx + 1); };
+  highlight(q);
+  updatePlayer();
+  setTimeout(() => { if (my === player.token) speechSynthesis.speak(u); }, 40);
+}
+function highlight(q) {
+  if (player.lastEl && player.lastEl !== q.el) player.lastEl.classList.remove("reading");
+  if (q.el) {
+    q.el.classList.add("reading");
+    if (player.lastEl !== q.el) {
+      const r = q.el.getBoundingClientRect();
+      if (r.top < 80 || r.bottom > window.innerHeight - 120) q.el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+    }
+  }
+  player.lastEl = q.el;
+}
+function playListening() { if (!player.queue.length) return; player.playing = true; $("player").hidden = false; speakAt(player.idx); }
+function pauseListening() { player.playing = false; player.token++; try { speechSynthesis.cancel(); } catch (_) {} updatePlayer(); }
+function stopListening() {
+  player.playing = false; player.token++; player.idx = 0;
+  try { if (TTS) speechSynthesis.cancel(); } catch (_) {}
+  if (player.lastEl) player.lastEl.classList.remove("reading"); player.lastEl = null;
+  const p = $("player"); if (p) p.hidden = true;
+  updatePlayer();
+}
+function finishListening() { player.playing = false; if (player.lastEl) player.lastEl.classList.remove("reading"); player.lastEl = null; player.idx = 0; updatePlayer(); $("pl-label").textContent = "Finished"; }
+function updatePlayer() {
+  const n = player.queue.length || 1;
+  $("pl-bar").style.width = (100 * player.idx / n).toFixed(1) + "%";
+  $("pl-play").setAttribute("aria-label", player.playing ? "Pause" : "Play");
+  $("pl-play").classList.toggle("is-playing", player.playing);
+  const q = player.queue[player.idx];
+  $("pl-label").textContent = q ? q.label : "";
+  $("pl-rate").textContent = player.rate + "×";
+  const lb = document.querySelector(".listen-btn");
+  if (lb) { lb.classList.toggle("is-playing", player.playing); lb.querySelector(".lb-text").textContent = player.playing ? "Pause" : "Listen"; }
+}
+function skipSection(dir) {
+  const cur = player.queue[player.idx]; if (!cur) return;
+  let i = player.idx;
+  if (dir > 0) { while (i < player.queue.length && player.queue[i].el === cur.el) i++; }
+  else {
+    while (i > 0 && player.queue[i - 1].el === cur.el) i--;
+    if (i === player.idx || player.idx - i < 1) { i--; const prevEl = player.queue[Math.max(0, i)]?.el; while (i > 0 && player.queue[i - 1].el === prevEl) i--; }
+  }
+  i = Math.max(0, Math.min(player.queue.length - 1, i));
+  if (player.playing) speakAt(i); else { player.idx = i; highlight(player.queue[i]); updatePlayer(); }
+}
+$("pl-play").addEventListener("click", () => player.playing ? pauseListening() : playListening());
+$("pl-back").addEventListener("click", () => skipSection(-1));
+$("pl-next").addEventListener("click", () => skipSection(1));
+$("pl-rate").addEventListener("click", () => { const rs = [1, 1.25, 1.5, 0.85]; player.rate = rs[(rs.indexOf(player.rate) + 1) % rs.length]; if (player.playing) speakAt(player.idx); else updatePlayer(); });
+$("pl-close").addEventListener("click", stopListening);
+window.addEventListener("pagehide", () => { try { if (TTS) speechSynthesis.cancel(); } catch (_) {} });
+
+/* Reading progress line */
+(function () {
+  const bar = $("read-progress");
+  const upd = () => {
+    const r = $("report").getBoundingClientRect();
+    const total = r.height - window.innerHeight * 0.5;
+    const done = Math.min(1, Math.max(0, (window.innerHeight * 0.5 - r.top) / Math.max(1, total)));
+    bar.style.transform = "scaleX(" + done.toFixed(3) + ")";
+  };
+  window.addEventListener("scroll", upd, { passive: true }); window.addEventListener("resize", upd); upd();
+})();
+
 
 /* ---------- Wire up ---------- */
 document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => setMode(t.dataset.mode)));

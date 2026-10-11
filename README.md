@@ -9,6 +9,8 @@ A fake news and AI-content checker. Paste text, or upload a picture or video cli
 - **Text, picture and video checks.** Videos are checked as evenly spaced still frames (4–12).
 - **A plain-language verdict** with two scores (likely fake or misleading, likely AI-generated) and how sure it is.
 - **Arguments, not just labels:** each reason shows what was found in the content, why it matters, and how strong a sign it is, plus points on the other side.
+- **Listen to the result:** a Listen button reads the verdict and every argument aloud, with a floating player (pause, skip section, speed) that highlights and scrolls to the part being read.
+- **Comfortable editorial reading:** a news serif for everything you read, generous spacing, numbered arguments and a reading progress line.
 - **A calm layout:** verdict and reasons first; extra details are folded away until you open them.
 - **Flagged passages:** the exact sentences that sound AI-written or misleading are highlighted in the original text.
 - **Manipulation tactics:** clickbait, false context, fake quotes, urgency, share bait and similar.
